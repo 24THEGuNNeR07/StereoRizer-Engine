@@ -139,7 +139,7 @@ int main(void)
 	VertexBuffer vb(positions, 6 * sizeof(float));
 
     VertexBufferLayout layout;
-	layout.Push<float>(2); // 2 floats per vertex (x, y)
+	layout.Push<float>(2);
 	va.AddBuffer(vb, layout);
 
 	IndexBuffer ib(indices, 3);
@@ -171,7 +171,7 @@ int main(void)
         /* Render here */
         glClear(GL_COLOR_BUFFER_BIT);
 
-		glBindVertexArray(vao);
+		vb.Bind();
 		ib.Bind();
 
 		glDrawArrays(GL_TRIANGLES, 0, 3);
