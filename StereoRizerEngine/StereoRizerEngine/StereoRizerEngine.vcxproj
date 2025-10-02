@@ -21,8 +21,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{3b9f529b-3a0c-45e3-a4db-fe4fafbf541f}</ProjectGuid>
-    <RootNamespace>StereoRizer</RootNamespace>
+    <ProjectGuid>{725f4131-ae11-4b31-abcb-b5c7e27c5318}</ProjectGuid>
+    <RootNamespace>StereoRizerEngine</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -104,17 +104,17 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)\external\glfw\include;$(ProjectDir)\external\glew\include;$(ProjectDir)\include</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>..\external\glfw\include;..\external\glew\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(ProjectDir)\external\glfw\lib\win\glfw3dll.lib;$(ProjectDir)\external\glew\lib\Release\x64\glew32.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\external\glfw\lib\win;..\external\glew\lib\Release\x64</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glfw3dll.lib;glew32.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>copy /Y "$(ProjectDir)external\glfw\lib\win\glfw3.dll" "$(TargetDir)"
-copy /Y "$(ProjectDir)external\glew\bin\Release\x64\glew32.dll" "$(TargetDir)"</Command>
+      <Command>copy /Y "..\external\glfw\lib\win\glfw3.dll" "$(TargetDir)
+copy /Y "..\external\glew\bin\Release\x64\glew32.dll</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -125,40 +125,23 @@ copy /Y "$(ProjectDir)external\glew\bin\Release\x64\glew32.dll" "$(TargetDir)"</
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)\external\glfw\include;$(ProjectDir)\external\glew\include;$(ProjectDir)\include</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>..\external\glfw\include;..\external\glew\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>$(ProjectDir)\external\glfw\lib\win\glfw3dll.lib;$(ProjectDir)\external\glew\lib\Release\x64\glew32.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\external\glfw\lib\win;..\external\glew\lib\Release\x64</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glfw3dll.lib;glew32.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>copy /Y "$(ProjectDir)external\glfw\lib\win\glfw3.dll" "$(TargetDir)"
-copy /Y "$(ProjectDir)external\glew\bin\Release\x64\glew32.dll" "$(TargetDir)"</Command>
+      <Command>copy /Y "..\external\glfw\lib\win\glfw3.dll" "$(TargetDir)
+copy /Y "..\external\glew\bin\Release\x64\glew32.dll</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\IndexBuffer.cpp" />
-    <ClCompile Include="src\Main.cpp" />
-    <ClCompile Include="src\Renderer.cpp" />
-    <ClCompile Include="src\Shader.cpp" />
-    <ClCompile Include="src\VertexArray.cpp" />
-    <ClCompile Include="src\VertexBuffer.cpp" />
-    <ClCompile Include="src\VertexBufferLayout.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="include\IndexBuffer.h" />
-    <ClInclude Include="include\Renderer.h" />
-    <ClInclude Include="include\Shader.h" />
-    <ClInclude Include="include\VertexArray.h" />
-    <ClInclude Include="include\VertexBuffer.h" />
-    <ClInclude Include="include\VertexBufferLayout.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="res\shaders\Basic.shader" />
+    <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
