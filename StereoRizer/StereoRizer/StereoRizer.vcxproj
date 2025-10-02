@@ -144,6 +144,7 @@ copy /Y "$(ProjectDir)external\glew\bin\Release\x64\glew32.dll" "$(TargetDir)"</
     <ClCompile Include="src\IndexBuffer.cpp" />
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\Renderer.cpp" />
+    <ClCompile Include="src\Shader.cpp" />
     <ClCompile Include="src\VertexArray.cpp" />
     <ClCompile Include="src\VertexBuffer.cpp" />
     <ClCompile Include="src\VertexBufferLayout.cpp" />
@@ -151,6 +152,7 @@ copy /Y "$(ProjectDir)external\glew\bin\Release\x64\glew32.dll" "$(TargetDir)"</
   <ItemGroup>
     <ClInclude Include="include\IndexBuffer.h" />
     <ClInclude Include="include\Renderer.h" />
+    <ClInclude Include="include\Shader.h" />
     <ClInclude Include="include\VertexArray.h" />
     <ClInclude Include="include\VertexBuffer.h" />
     <ClInclude Include="include\VertexBufferLayout.h" />
