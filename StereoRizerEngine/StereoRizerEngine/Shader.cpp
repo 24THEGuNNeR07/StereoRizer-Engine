@@ -14,9 +14,10 @@ Shader::~Shader()
 	glDeleteProgram(_rendererID);
 }
 
-void Shader::Bind() const
+void Shader::Bind()
 {
-	glUseProgram(_rendererID);
+	if(!ReloadIfChanged())
+		glUseProgram(_rendererID);
 }
 
 void Shader::Unbind() const
@@ -24,7 +25,7 @@ void Shader::Unbind() const
 	glUseProgram(0);
 }
 
-void Shader::ReloadIfChanged()
+bool Shader::ReloadIfChanged()
 {
 	fs::file_time_type currentWriteTime = GetLastWriteTime();
 	if (currentWriteTime != _lastWriteTime) {
@@ -37,8 +38,13 @@ void Shader::ReloadIfChanged()
 			glDeleteProgram(_rendererID);
 			_rendererID = newShader;
 			glUseProgram(_rendererID);
+			return true;
 		}
+		else
+			return false;
 	}
+	else
+		return false;
 }
 
 unsigned int Shader::CompileShader(const std::string& source, unsigned int type)

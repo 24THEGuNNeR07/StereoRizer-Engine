@@ -105,18 +105,19 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>..\external\glfw\include;..\external\glew\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\external\glfw\include;..\external\glew\include;..\external\assimp\include;..\external\glm\include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>..\external\glfw\lib\win;..\external\glew\lib\Release\x64</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glfw3dll.lib;glew32.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\external\glfw\lib\win;..\external\glew\lib\Release\x64;..\external\assimp\lib\Debug\;..\external\glm\lib\win</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glfw3dll.lib;glew32.lib;opengl32.lib;assimp-vc143-mtd.lib;glm.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>copy /Y "..\external\glfw\lib\win\glfw3.dll" "$(TargetDir)
-copy /Y "..\external\glew\bin\Release\x64\glew32.dll</Command>
+      <Command>copy /Y "..\external\glfw\lib\win\glfw3.dll" "$(TargetDir)"
+copy /Y "..\external\glew\bin\Release\x64\glew32.dll" "$(TargetDir)"
+copy /Y "..\external\assimp\bin\Debug\assimp-vc143-mtd.dll" "$(TargetDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -127,7 +128,7 @@ copy /Y "..\external\glew\bin\Release\x64\glew32.dll</Command>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>..\external\glfw\include;..\external\glew\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\external\glfw\include;..\external\glew\include;..\external\assimp\include;..\external\glm\include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
@@ -135,17 +136,19 @@ copy /Y "..\external\glew\bin\Release\x64\glew32.dll</Command>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>..\external\glfw\lib\win;..\external\glew\lib\Release\x64</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glfw3dll.lib;glew32.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\external\glfw\lib\win;..\external\glew\lib\Release\x64;..\external\assimp\lib\Debug\;..\external\glm\lib\win</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glfw3dll.lib;glew32.lib;opengl32.lib;assimp-vc143-mtd.lib;glm.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>copy /Y "..\external\glfw\lib\win\glfw3.dll" "$(TargetDir)
-copy /Y "..\external\glew\bin\Release\x64\glew32.dll</Command>
+      <Command>copy /Y "..\external\glfw\lib\win\glfw3.dll" "$(TargetDir)"
+copy /Y "..\external\glew\bin\Release\x64\glew32.dll" "$(TargetDir)"
+copy /Y "..\external\assimp\bin\Debug\assimp-vc143-mtd.dll" "$(TargetDir)"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="IndexBuffer.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="VertexArray.cpp" />
@@ -155,6 +158,7 @@ copy /Y "..\external\glew\bin\Release\x64\glew32.dll</Command>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="IndexBuffer.h" />
+    <ClInclude Include="Mesh.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="VertexArray.h" />
