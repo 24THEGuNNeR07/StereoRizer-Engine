@@ -3,6 +3,8 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
+#include "Renderer.h"
+
 class Window
 {
 public:
@@ -24,5 +26,6 @@ private:
 	const char* _title;
 	GLFWwindow* _window;
 	void Create();
+	Renderer _renderer;
 };
 
