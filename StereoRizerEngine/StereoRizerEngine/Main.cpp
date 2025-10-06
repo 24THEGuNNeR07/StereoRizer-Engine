@@ -7,10 +7,9 @@ int main()
 {
     Window window(800, 600, "StereoRizer Engine");
 
-	Mesh mesh("../models/Cube.obj");
-    Shader shader("Flat.shader");
+	Model model("../models/Cube.obj", "Flat.shader");
 
-    window.Run(mesh, shader);
+    window.Run(model);
 
     return 0;
 }

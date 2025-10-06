@@ -39,13 +39,13 @@ void Window::SwapBuffers()
 	glfwSwapBuffers(_window);
 }
 
-void Window::Run(Mesh& mesh, Shader& shader)
+void Window::Run(Model& model)
 {
 	while (!glfwWindowShouldClose(_window))
 	{
 		_renderer.Clear();
 
-		_renderer.Draw(mesh, shader);
+		_renderer.Draw(model);
 
 		// Swap front and back buffers
 		SwapBuffers();

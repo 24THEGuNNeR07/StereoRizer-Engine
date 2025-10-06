@@ -14,7 +14,7 @@ public:
 	void Destroy();
 	void PollEvents();
 	void SwapBuffers();
-	void Run(Mesh& mesh, Shader& shader);
+	void Run(Model& model);
 
 	int GetWidth() const;
 	int GetHeight() const;

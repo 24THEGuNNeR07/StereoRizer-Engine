@@ -1,9 +1,8 @@
 #include "Renderer.h"
 
-void Renderer::Draw(Mesh& mesh, Shader& shader)
+void Renderer::Draw(Model& model)
 {
-	shader.Bind();
-	mesh.Draw();
+	model.Draw();
 }
 
 void Renderer::Clear()
