@@ -3,6 +3,10 @@
 #include <vector>
 #include <string>
 
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+
 #include "Shader.h"
 
 struct Vertex {
@@ -30,15 +34,16 @@ public:
     // mesh Data
     std::vector<Vertex>       vertices;
     std::vector<unsigned int> indices;
-    std::vector<Texture>      textures;
     unsigned int VAO;
     
-	Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures);
-    ~Mesh() = default;
+	Mesh(std::string const path);
     void Draw();
 
 private:
 	unsigned int VBO, EBO;
+    std::string _path;
 	void SetupMesh();
+	void ProcessMesh();
+    void ProcessMeshInternally(aiMesh* mesh, const aiScene* scene);
 };
 

@@ -39,40 +39,13 @@ void Window::SwapBuffers()
 	glfwSwapBuffers(_window);
 }
 
-void Window::Run()
+void Window::Run(Mesh& mesh, Shader& shader)
 {
-	////TODO move to renderer
-	//float positions[6] = {
-	//	-0.5f, -0.5f,
-	//	0.0f, 0.5f,
-	//	0.5f, -0.5f
-	//};
-
-	//unsigned int indices[3] = {
-	//	0, 1, 2
-	//};
-
-	//unsigned int vao;
-	//glGenVertexArrays(1, &vao);
-	//glBindVertexArray(vao);
-
-	//VertexArray va;
-	//VertexBuffer vb(positions, 6 * sizeof(float));
-
-	//VertexBufferLayout layout;
-	//layout.Push<float>(2);
-	//va.AddBuffer(vb, layout);
-
-	//IndexBuffer ib(indices, 3);
-
-	//Shader shader("Flat.shader");
-	//shader.Bind();
-
 	while (!glfwWindowShouldClose(_window))
 	{
 		_renderer.Clear();
 
-		//_renderer.Draw(va, ib, shader);
+		_renderer.Draw(mesh, shader);
 
 		// Swap front and back buffers
 		SwapBuffers();

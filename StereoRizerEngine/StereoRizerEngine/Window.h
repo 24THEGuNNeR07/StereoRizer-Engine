@@ -11,11 +11,10 @@ public:
 	Window(int width, int height, const char* title);
 	~Window();
 
-	
 	void Destroy();
 	void PollEvents();
 	void SwapBuffers();
-	void Run();
+	void Run(Mesh& mesh, Shader& shader);
 
 	int GetWidth() const;
 	int GetHeight() const;
