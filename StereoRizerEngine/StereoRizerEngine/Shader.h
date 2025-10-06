@@ -26,6 +26,7 @@ public:
 	~Shader();
 	void Bind();
 	void Unbind() const;
+	unsigned int GetID() const { return _rendererID; }
 	
 	//void SetUniform4f(const std::string& name, float v0, float v1, float v2, float v3);
 

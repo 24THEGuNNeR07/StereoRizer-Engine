@@ -1,5 +1,8 @@
 #pragma once
+#include "Shader.h"
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 class Camera
 {
@@ -19,5 +22,6 @@ private:
 public:
 	Camera(float fov, float aspectRatio, float nearPlane, float farPlane);
 	~Camera() = default;
+	void SetShaderUnifroms(Shader& shader);
 };
 

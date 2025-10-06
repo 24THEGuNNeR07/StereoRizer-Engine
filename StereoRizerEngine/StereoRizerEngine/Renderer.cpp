@@ -2,6 +2,7 @@
 
 void Renderer::Draw(Model& model)
 {
+	_camera.SetShaderUnifroms(model.GetShader());
 	model.Draw();
 }
 
