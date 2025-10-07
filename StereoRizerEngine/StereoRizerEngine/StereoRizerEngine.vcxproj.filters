@@ -92,5 +92,8 @@
     <None Include="Flat.shader">
       <Filter>Resource Files\Shaders</Filter>
     </None>
+    <None Include="Phong.shader">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

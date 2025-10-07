@@ -24,7 +24,8 @@ private:
 	int _height;
 	const char* _title;
 	GLFWwindow* _window;
+	Renderer _leftRenderer;
+	Renderer _rightRenderer;
 	void Create();
-	Renderer _renderer;
 };
 

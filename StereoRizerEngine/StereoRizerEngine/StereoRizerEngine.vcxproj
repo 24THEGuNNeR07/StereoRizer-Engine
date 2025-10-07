@@ -173,6 +173,7 @@ copy /Y "..\external\assimp\bin\Debug\assimp-vc143-mtd.dll" "$(TargetDir)"</Comm
   <ItemGroup>
     <None Include="Flat.shader" />
     <None Include="packages.config" />
+    <None Include="Phong.shader" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
