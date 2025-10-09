@@ -1,7 +1,19 @@
 #pragma once
+#define _CRT_SECURE_NO_WARNINGS
+
 #include <iostream>
+
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#include <unknwn.h>
+
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+
+#define XR_USE_GRAPHICS_API_OPENGL
+#define XR_USE_PLATFORM_WIN32
+#include "openxr/openxr.h"
+#include "openxr/openxr_platform.h"
 
 #include "Renderer.h"
 
@@ -27,5 +39,13 @@ private:
 	Renderer _leftRenderer;
 	Renderer _rightRenderer;
 	void Create();
+	bool _xrInitialized = false;
+	void InitOpenXR();
+
+	// OpenXR
+	XrInstance xrInstance{ XR_NULL_HANDLE };
+	XrSystemId xrSystemId{ XR_NULL_SYSTEM_ID };
+	XrSession xrSession{ XR_NULL_HANDLE };
+	XrSpace xrAppSpace{ XR_NULL_HANDLE };
 };
 
