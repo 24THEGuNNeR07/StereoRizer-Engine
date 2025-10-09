@@ -15,11 +15,11 @@ struct Vertex {
     // normal
     glm::vec3 Normal;
     // texCoords
-    glm::vec2 TexCoords;
-    // tangent
-    glm::vec3 Tangent;
-    // bitangent
-    glm::vec3 Bitangent;
+    //glm::vec2 TexCoords;
+    //// tangent
+    //glm::vec3 Tangent;
+    //// bitangent
+    //glm::vec3 Bitangent;
 };
 
 struct Texture {
@@ -36,14 +36,17 @@ public:
     std::vector<unsigned int> indices;
     unsigned int VAO;
     
+    Mesh();
 	Mesh(std::string const path);
     void Draw();
+
+protected:
+    void SetupMesh();
 
 private:
 	unsigned int VBO, EBO;
     std::string _path;
-	void SetupMesh();
 	void ProcessMesh();
-    void ProcessMeshInternally(aiMesh* mesh, const aiScene* scene);
+    void ProcessMeshInternally(aiMesh* mesh);
 };
 

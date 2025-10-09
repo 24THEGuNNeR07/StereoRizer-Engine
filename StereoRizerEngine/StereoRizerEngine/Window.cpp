@@ -47,6 +47,7 @@ void Window::Run(Model& model)
 		glfwGetFramebufferSize(_window, &_width, &_height);
 
 		glClear(GL_COLOR_BUFFER_BIT);
+		//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 		glViewport(0, 0, _width / 2, _height);
 		_leftRenderer.Draw(model);
@@ -80,6 +81,10 @@ void Window::Create()
 		std::cout << "Error initializing GLFW" << std::endl;
 		return;
 	}
+
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	_window = glfwCreateWindow(_width, _height, _title, NULL, NULL);
 	if (!_window)
