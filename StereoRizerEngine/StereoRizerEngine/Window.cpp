@@ -110,18 +110,91 @@ void Window::Create()
 
 void Window::InitOpenXR()
 {
-	// Create OpenXR instance
-	XrInstanceCreateInfo createInfo{ XR_TYPE_INSTANCE_CREATE_INFO };
-	strcpy(createInfo.applicationInfo.applicationName, "StereoRizer");
-	createInfo.applicationInfo.applicationVersion = 1;
-	strcpy(createInfo.applicationInfo.engineName, "StereoRizerEngine");
-	createInfo.applicationInfo.engineVersion = 1;
-	createInfo.applicationInfo.apiVersion = XR_CURRENT_API_VERSION;
+	XrApplicationInfo AI;
+	strncpy(AI.applicationName, "OpenXR Tutorial Chapter 2", XR_MAX_APPLICATION_NAME_SIZE);
+	AI.applicationVersion = 1;
+	strncpy(AI.engineName, "OpenXR Engine", XR_MAX_ENGINE_NAME_SIZE);
+	AI.engineVersion = 1;
+	AI.apiVersion = XR_CURRENT_API_VERSION;
 
-	XrResult result = xrCreateInstance(&createInfo, &xrInstance);
-	if (XR_FAILED(result)) {
-		std::cerr << "Failed to create OpenXR instance\n";
+	m_instanceExtensions.push_back(XR_EXT_DEBUG_UTILS_EXTENSION_NAME);
+	// Ensure m_apiType is already defined when we call this line.
+	m_instanceExtensions.push_back(GetGraphicsAPIInstanceExtensionString(m_apiType));
+
+	XrResult result;
+	// Get all the API Layers from the OpenXR runtime.
+	uint32_t apiLayerCount = 0;
+	std::vector<XrApiLayerProperties> apiLayerProperties;
+	result = xrEnumerateApiLayerProperties(0, &apiLayerCount, nullptr);
+	if (result != XR_SUCCESS) {
+		std::cerr << "Failed to enumerate API layer properties." << std::endl;
 		return;
+	}
+	apiLayerProperties.resize(apiLayerCount, { XR_TYPE_API_LAYER_PROPERTIES });
+	result = xrEnumerateApiLayerProperties(apiLayerCount, &apiLayerCount, apiLayerProperties.data());
+	if (result != XR_SUCCESS) {
+		std::cerr << "Failed to enumerate API layer properties." << std::endl;
+		return;
+	}
+
+	// Check the requested API layers against the ones from the OpenXR. If found add it to the Active API Layers.
+	for (auto& requestLayer : m_apiLayers) {
+		for (auto& layerProperty : apiLayerProperties) {
+			// strcmp returns 0 if the strings match.
+			if (strcmp(requestLayer.c_str(), layerProperty.layerName) != 0) {
+				continue;
+			}
+			else {
+				m_activeAPILayers.push_back(requestLayer.c_str());
+				break;
+			}
+		}
+	}
+
+	// Get all the Instance Extensions from the OpenXR instance.
+	uint32_t extensionCount = 0;
+	std::vector<XrExtensionProperties> extensionProperties;
+	xrEnumerateInstanceExtensionProperties(nullptr, 0, &extensionCount, nullptr);
+	extensionProperties.resize(extensionCount, { XR_TYPE_EXTENSION_PROPERTIES });
+	xrEnumerateInstanceExtensionProperties(nullptr, extensionCount, &extensionCount, extensionProperties.data());
+
+	// Check the requested Instance Extensions against the ones from the OpenXR runtime.
+	// If an extension is found add it to Active Instance Extensions.
+	// Log error if the Instance Extension is not found.
+	for (auto& requestedInstanceExtension : m_instanceExtensions) {
+		bool found = false;
+		for (auto& extensionProperty : extensionProperties) {
+			// strcmp returns 0 if the strings match.
+			if (strcmp(requestedInstanceExtension.c_str(), extensionProperty.extensionName) != 0) {
+				continue;
+			}
+			else {
+				m_activeInstanceExtensions.push_back(requestedInstanceExtension.c_str());
+				found = true;
+				break;
+			}
+		}
+		if (!found) {
+			std::cerr<< "Failed to find OpenXR instance extension: " << requestedInstanceExtension << std::endl;
+		}
+	}
+
+	XrInstanceCreateInfo instanceCI{ XR_TYPE_INSTANCE_CREATE_INFO };
+	instanceCI.createFlags = 0;
+	instanceCI.applicationInfo = AI;
+	instanceCI.enabledApiLayerCount = static_cast<uint32_t>(m_activeAPILayers.size());
+	instanceCI.enabledApiLayerNames = m_activeAPILayers.data();
+	instanceCI.enabledExtensionCount = static_cast<uint32_t>(m_activeInstanceExtensions.size());
+	instanceCI.enabledExtensionNames = m_activeInstanceExtensions.data();
+	result = xrCreateInstance(&instanceCI, &xrInstance);
+
+	if (result != XR_SUCCESS) {
+		std::cerr << "Failed to create XR instance." << std::endl;
+		std::cerr << "Error code: " << result << std::endl;
+		return;
+	}
+	else {
+		std::cout << "XR Instance created successfully." << std::endl;
 	}
 
 	// Get system ID (headset)
@@ -130,6 +203,22 @@ void Window::InitOpenXR()
 	result = xrGetSystem(xrInstance, &systemInfo, &xrSystemId);
 	if (XR_FAILED(result)) {
 		std::cerr << "Failed to get OpenXR system\n";
+		return;
+	}
+
+	// Load graphics requirements function
+	PFN_xrGetOpenGLGraphicsRequirementsKHR pfnGetOpenGLGraphicsRequirementsKHR = nullptr;
+	xrGetInstanceProcAddr(
+		xrInstance,
+		"xrGetOpenGLGraphicsRequirementsKHR",
+		reinterpret_cast<PFN_xrVoidFunction*>(&pfnGetOpenGLGraphicsRequirementsKHR)
+	);
+
+	// Query requirements
+	XrGraphicsRequirementsOpenGLKHR graphicsRequirements{ XR_TYPE_GRAPHICS_REQUIREMENTS_OPENGL_KHR };
+	result = pfnGetOpenGLGraphicsRequirementsKHR(xrInstance, xrSystemId, &graphicsRequirements);
+	if (XR_FAILED(result)) {
+		std::cerr << "Failed to get OpenGL graphics requirements\n";
 		return;
 	}
 
@@ -147,13 +236,4 @@ void Window::InitOpenXR()
 		std::cerr << "Failed to create OpenXR session\n";
 		return;
 	}
-
-	// Create app space
-	XrReferenceSpaceCreateInfo spaceCreateInfo{ XR_TYPE_REFERENCE_SPACE_CREATE_INFO };
-	spaceCreateInfo.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_STAGE;
-	spaceCreateInfo.poseInReferenceSpace = { {0,0,0,1}, {0,0,0} };
-
-	xrCreateReferenceSpace(xrSession, &spaceCreateInfo, &xrAppSpace);
-
-	_xrInitialized = true;
 }

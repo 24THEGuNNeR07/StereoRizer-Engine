@@ -16,6 +16,7 @@
 #include "openxr/openxr_platform.h"
 
 #include "Renderer.h"
+#include "GfxAPIUtils.h"
 
 class Window
 {
@@ -47,5 +48,19 @@ private:
 	XrSystemId xrSystemId{ XR_NULL_SYSTEM_ID };
 	XrSession xrSession{ XR_NULL_HANDLE };
 	XrSpace xrAppSpace{ XR_NULL_HANDLE };
+
+	std::vector<const char*> m_activeAPILayers = {};
+	std::vector<const char*> m_activeInstanceExtensions = {};
+	std::vector<std::string> m_apiLayers = {};
+	std::vector<std::string> m_instanceExtensions = {};
+
+	XrDebugUtilsMessengerEXT m_debugUtilsMessenger = {};
+
+	XrFormFactor m_formFactor = XR_FORM_FACTOR_HEAD_MOUNTED_DISPLAY;
+	XrSystemId m_systemID = {};
+	XrSystemProperties m_systemProperties = { XR_TYPE_SYSTEM_PROPERTIES };
+
+	GraphicsAPI_Type m_apiType = GraphicsAPI_Type::OpenGL;
+
 };
 
