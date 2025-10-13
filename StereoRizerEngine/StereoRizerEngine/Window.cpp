@@ -1,4 +1,4 @@
-#include "Window.h"
+﻿#include "Window.h"
 
 #include "VertexArray.h"
 #include "IndexBuffer.h"
@@ -85,8 +85,6 @@ void Window::Run(Model& model)
 		glm::mat4 leftView = ConvertXrPoseToMat4(views[0].pose);
 		glm::mat4 leftProj = ConvertXrFovToProj(views[0].fov, 0.1f, 100.0f);
 		_leftRenderer.SetCamera(leftView, leftProj);
-
-		std::cout << "Left position: " + std::to_string(views[0].pose.position.x) + ", " + std::to_string(views[0].pose.position.y) + ", " + std::to_string(views[0].pose.position.z) << std::endl;
 
 		glm::mat4 rightView = ConvertXrPoseToMat4(views[1].pose);
 		glm::mat4 rightProj = ConvertXrFovToProj(views[1].fov, 0.1f, 100.0f);
@@ -295,9 +293,17 @@ void Window::InitOpenXR()
 
 glm::mat4 Window::ConvertXrPoseToMat4(const XrPosef& pose)
 {
-	glm::quat q(pose.orientation.w, pose.orientation.x, pose.orientation.y, pose.orientation.z);
-	glm::vec3 t(pose.position.x, pose.position.y, pose.position.z);
-	return glm::translate(glm::mat4(1.0f), t) * glm::mat4_cast(q);
+	// Convert orientation and position to GLM types
+	glm::quat orientation(pose.orientation.w, pose.orientation.x, pose.orientation.y, pose.orientation.z);
+	glm::vec3 position(pose.position.x, pose.position.y, pose.position.z);
+
+	// Build the transform (world-space pose)
+	glm::mat4 rotation = glm::mat4_cast(orientation);
+	glm::mat4 translation = glm::translate(glm::mat4(1.0f), position);
+	glm::mat4 worldFromPose = translation * rotation;
+
+	// Return inverse for view matrix (world → view)
+	return glm::inverse(worldFromPose);
 }
 
 glm::mat4 Window::ConvertXrFovToProj(const XrFovf& fov, float nearZ, float farZ)
