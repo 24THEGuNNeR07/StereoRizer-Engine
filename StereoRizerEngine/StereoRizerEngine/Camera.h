@@ -23,5 +23,7 @@ public:
 	Camera(float fov, float aspectRatio, float nearPlane, float farPlane);
 	~Camera() = default;
 	void SetShaderUnifroms(Shader& shader);
+	void SetViewMatrix(glm::mat4 view);
+	void SetProjectionMatrix(glm::mat4 proj);
 };
 

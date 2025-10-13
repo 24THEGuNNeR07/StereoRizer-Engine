@@ -18,3 +18,11 @@ void Camera::SetShaderUnifroms(Shader& shader)
 	unsigned int viewLoc = glGetUniformLocation(shader.GetID(), "viewMatrix");
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(_viewMatrix));
 }
+void Camera::SetProjectionMatrix(glm::mat4 proj)
+{
+	_projectionMatrix = proj;
+}
+void Camera::SetViewMatrix(glm::mat4 view)
+{
+	_viewMatrix = view;
+}

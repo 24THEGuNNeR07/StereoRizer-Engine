@@ -42,12 +42,16 @@ private:
 	void Create();
 	bool _xrInitialized = false;
 	void InitOpenXR();
+	glm::mat4 ConvertXrPoseToMat4(const XrPosef& pose);
+	glm::mat4 ConvertXrFovToProj(const XrFovf& fov, float nearZ, float farZ);
+	void PollXrEvents();
 
 	// OpenXR
 	XrInstance xrInstance{ XR_NULL_HANDLE };
 	XrSystemId xrSystemId{ XR_NULL_SYSTEM_ID };
 	XrSession xrSession{ XR_NULL_HANDLE };
 	XrSpace xrAppSpace{ XR_NULL_HANDLE };
+	XrSessionState currentState = XR_SESSION_STATE_UNKNOWN;
 
 	std::vector<const char*> m_activeAPILayers = {};
 	std::vector<const char*> m_activeInstanceExtensions = {};
