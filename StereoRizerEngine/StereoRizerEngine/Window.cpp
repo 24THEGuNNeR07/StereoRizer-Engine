@@ -42,69 +42,172 @@ void Window::SwapBuffers()
 
 void Window::Run(Model& model)
 {
+	// persistent dstFbo (create once)
+	GLuint xrDstFbo = 0;
+	glGenFramebuffers(1, &xrDstFbo);
+
+	GLuint srcFbo = 0; // 0 if rendering to default framebuffer (window backbuffer)
+	int srcWidth = _width;
+	int srcHeight = _height;
+
 	while (!glfwWindowShouldClose(_window))
 	{
-		glfwGetFramebufferSize(_window, &_width, &_height);
+		glfwMakeContextCurrent(_window); // force same context before every frame
 
-		glClear(GL_COLOR_BUFFER_BIT);
+		glfwGetFramebufferSize(_window, &_width, &_height);
+		srcWidth = _width;
+		srcHeight = _height;
+
+		// Clear window backbuffer (we render the app into backbuffer halves)
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glViewport(0, 0, _width, _height);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		PollXrEvents();
 
+		// --- OpenXR frame begin ---
 		XrResult res;
-		// 1. Get OpenXR frame data
 		XrFrameState frameState{ XR_TYPE_FRAME_STATE };
 		res = xrWaitFrame(xrSession, nullptr, &frameState);
 		if (XR_FAILED(res)) {
-			std::cerr << "Failed to wait for frame\n";
-			return;
+			std::cerr << "xrWaitFrame failed: " << res << std::endl;
+			break;
 		}
+
 		res = xrBeginFrame(xrSession, nullptr);
-
 		if (XR_FAILED(res)) {
-			std::cerr << "Failed to begin frame\n";
-			return;
+			std::cerr << "xrBeginFrame failed: " << res << std::endl;
+			break;
 		}
 
-		// Example: get views for left/right eye
-		uint32_t viewCount = 2;
-		XrView views[2]{ {XR_TYPE_VIEW}, {XR_TYPE_VIEW} };
+		// Locate views
+		const uint32_t viewCapacity = 2;
+		XrView views[viewCapacity] = { {XR_TYPE_VIEW}, {XR_TYPE_VIEW} };
+		XrViewState viewState{ XR_TYPE_VIEW_STATE };
 		XrViewLocateInfo locateInfo{ XR_TYPE_VIEW_LOCATE_INFO };
 		locateInfo.viewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
 		locateInfo.displayTime = frameState.predictedDisplayTime;
 		locateInfo.space = xrAppSpace;
 
-		XrViewState viewState{ XR_TYPE_VIEW_STATE };
-		uint32_t viewCountOutput;
-		res = xrLocateViews(xrSession, &locateInfo, &viewState, viewCount, &viewCountOutput, views);
-
-		if (XR_FAILED(res)) {
-			std::cerr << "Failed to locate views\n";
-			return;
+		uint32_t viewCountOutput = 0;
+		res = xrLocateViews(xrSession, &locateInfo, &viewState, viewCapacity, &viewCountOutput, views);
+		if (XR_FAILED(res) || viewCountOutput < 2) {
+			std::cerr << "xrLocateViews failed or returned <2 views: " << res << ", count=" << viewCountOutput << std::endl;
+			// still try to continue but skip XR submit if views invalid
 		}
 
+		// --- Render the scene once into window backbuffer (left/right halves) ---
+		// Set left camera and draw to left half
 		glm::mat4 leftView = ConvertXrPoseToMat4(views[0].pose);
 		glm::mat4 leftProj = ConvertXrFovToProj(views[0].fov, 0.1f, 100.0f);
 		_leftRenderer.SetCamera(leftView, leftProj);
-
-		glm::mat4 rightView = ConvertXrPoseToMat4(views[1].pose);
-		glm::mat4 rightProj = ConvertXrFovToProj(views[1].fov, 0.1f, 100.0f);
-		_rightRenderer.SetCamera(rightView, rightProj);
-
 		glViewport(0, 0, _width / 2, _height);
 		_leftRenderer.Draw(model);
 
-		glViewport(_width/ 2, 0, _width / 2, _height);
+		// Set right camera and draw to right half
+		glm::mat4 rightView = ConvertXrPoseToMat4(views[1].pose);
+		glm::mat4 rightProj = ConvertXrFovToProj(views[1].fov, 0.1f, 100.0f);
+		_rightRenderer.SetCamera(rightView, rightProj);
+		glViewport(_width / 2, 0, _width / 2, _height);
 		_rightRenderer.Draw(model);
 
-		// Swap front and back buffers
+		// Ensure all draws are finished into backbuffer before we read from it
+		// (glFlush should be sufficient usually; use glFinish for debugging)
+		glFlush();
+
+		// Prepare layerViews
+		std::vector<XrCompositionLayerProjectionView> layerViews(2, { XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW });
+
+		// For each eye: acquire swapchain image, blit the correct half, release, and fill layerViews
+		for (uint32_t eye = 0; eye < 2; ++eye)
+		{
+			XrSwapchainData& sc = _swapchains[eye];
+			if (sc.handle == XR_NULL_HANDLE || sc.images.empty()) {
+				std::cerr << "Swapchain for eye " << eye << " invalid\n";
+				continue;
+			}
+
+			// Acquire image
+			uint32_t imageIndex = 0;
+			XrSwapchainImageAcquireInfo acquireInfo{ XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO };
+			res = xrAcquireSwapchainImage(sc.handle, &acquireInfo, &imageIndex);
+			if (XR_FAILED(res)) {
+				std::cerr << "xrAcquireSwapchainImage failed for eye " << eye << ": " << res << std::endl;
+				continue;
+			}
+
+			// Wait for image ready
+			XrSwapchainImageWaitInfo waitInfo{ XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO };
+			waitInfo.timeout = XR_INFINITE_DURATION;
+			res = xrWaitSwapchainImage(sc.handle, &waitInfo);
+			if (XR_FAILED(res)) {
+				std::cerr << "xrWaitSwapchainImage failed for eye " << eye << ": " << res << std::endl;
+				// best effort release
+				XrSwapchainImageReleaseInfo releaseInfo{ XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO };
+				xrReleaseSwapchainImage(sc.handle, &releaseInfo);
+				continue;
+			}
+
+			// Determine source rectangle in the window/backbuffer for this eye
+			// We rendered left eye into left half (0 .. _width/2) and right eye into right half (_width/2 .. _width)
+			GLint srcX = (eye == 0) ? 0 : (_width / 2);
+			GLint srcY = 0;
+			GLsizei srcW = _width / 2;
+			GLsizei srcH = _height;
+
+			// Blit from window backbuffer (READ) to swapchain texture (DRAW)
+			bool ok = CopyFramebufferToSwapchainByBlit_ReadRect(
+				srcFbo, srcX, srcY, srcW, srcH,
+				sc, imageIndex, xrDstFbo);
+
+			if (!ok) {
+				std::cerr << "CopyFramebufferToSwapchainByBlit failed for eye " << eye << std::endl;
+				// fallback: you could render a fullscreen quad into swapchain texture using src as texture
+			}
+
+			// Release swapchain image
+			XrSwapchainImageReleaseInfo releaseInfo{ XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO };
+			res = xrReleaseSwapchainImage(sc.handle, &releaseInfo);
+			if (XR_FAILED(res)) {
+				std::cerr << "xrReleaseSwapchainImage failed for eye " << eye << ": " << res << std::endl;
+			}
+
+			// Fill composition layer view
+			layerViews[eye].pose = views[eye].pose;
+			layerViews[eye].fov = views[eye].fov;
+			layerViews[eye].subImage.swapchain = sc.handle;
+			layerViews[eye].subImage.imageRect.offset = { 0, 0 };
+			layerViews[eye].subImage.imageRect.extent = { sc.width, sc.height };
+		} // end for eyes
+
+		// Submit frame to XR runtime
+		XrCompositionLayerProjection layer{ XR_TYPE_COMPOSITION_LAYER_PROJECTION };
+		layer.space = xrAppSpace;
+		layer.viewCount = (uint32_t)layerViews.size();
+		layer.views = layerViews.data();
+
+		const XrCompositionLayerBaseHeader* layers[] = {
+			reinterpret_cast<const XrCompositionLayerBaseHeader*>(&layer)
+		};
+
+		XrFrameEndInfo endInfo{ XR_TYPE_FRAME_END_INFO };
+		endInfo.displayTime = frameState.predictedDisplayTime;
+		endInfo.environmentBlendMode = XR_ENVIRONMENT_BLEND_MODE_OPAQUE;
+		endInfo.layerCount = 1;
+		endInfo.layers = layers;
+
+		res = xrEndFrame(xrSession, &endInfo);
+		if (XR_FAILED(res)) {
+			std::cerr << "xrEndFrame failed: " << res << std::endl;
+		}
+
 		SwapBuffers();
 
-		// Poll for and process events
 		PollEvents();
+	} // end while
 
-		//xrEndFrame(xrSession, nullptr);
-	}
-
+	// cleanup dstFbo
+	glDeleteFramebuffers(1, &xrDstFbo);
 }
 
 int Window::GetWidth() const
@@ -119,35 +222,20 @@ int Window::GetHeight() const
 
 void Window::Create()
 {
-	/* Initialize the library */
-	if (!glfwInit()) {
-		std::cout << "Error initializing GLFW" << std::endl;
-		return;
-	}
-
+	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	_window = glfwCreateWindow(_width, _height, _title, NULL, NULL);
-	if (!_window)
-	{
-		glfwTerminate();
-		return;
-	}
-
-	/* Make the window's context current */
 	glfwMakeContextCurrent(_window);
 
-	//glfwSetFramebufferSizeCallback(_window, Window::framebuffer_size_callback);
+	glewInit();
 
-	GLenum err = glewInit();
-	if (err != GLEW_OK)
-	{
-		std::cerr << "GLEW Error: " << glewGetErrorString(err) << std::endl;
-		return;
-	}
+	// DEBUG: Check GPU
+	std::cerr << "GL Renderer: " << glGetString(GL_RENDERER) << std::endl;
 
+	// Now create OpenXR session, passing this context in graphics binding
 	InitOpenXR();
 }
 
@@ -270,6 +358,9 @@ void Window::InitOpenXR()
 	graphicsBinding.hDC = wglGetCurrentDC();
 	graphicsBinding.hGLRC = wglGetCurrentContext();
 
+	xrSessionGLRC = graphicsBinding.hGLRC;
+	xrSessionDC = graphicsBinding.hDC;
+
 	XrSessionCreateInfo sessionCreateInfo{ XR_TYPE_SESSION_CREATE_INFO };
 	sessionCreateInfo.next = &graphicsBinding;
 	sessionCreateInfo.systemId = xrSystemId;
@@ -289,6 +380,7 @@ void Window::InitOpenXR()
 		std::cerr << "Failed to create reference space\n";
 		return;
 	}
+	CreateXRSwapchains();
 }
 
 glm::mat4 Window::ConvertXrPoseToMat4(const XrPosef& pose)
@@ -358,4 +450,117 @@ void Window::PollXrEvents()
 		// Reset structure for next poll
 		eventData = { XR_TYPE_EVENT_DATA_BUFFER };
 	}
+}
+
+void Window::CreateXRSwapchains()
+{
+	uint32_t viewCountOutput;
+
+	// First call — query how many views
+	XrResult result = xrEnumerateViewConfigurationViews(
+		xrInstance,
+		xrSystemId,
+		XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO,
+		0,
+		&viewCountOutput,
+		nullptr);
+
+	if (XR_FAILED(result)) {
+		std::cerr << "First xrEnumerateViewConfigurationViews failed: " << result << std::endl;
+		return;
+	}
+
+	std::vector<XrViewConfigurationView> configViews(
+		viewCountOutput,
+		{ XR_TYPE_VIEW_CONFIGURATION_VIEW });
+
+	result = xrEnumerateViewConfigurationViews(
+		xrInstance,
+		xrSystemId,
+		XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO,
+		viewCountOutput,
+		&viewCountOutput,
+		configViews.data());
+
+	if (XR_FAILED(result)) {
+		std::cerr << "Second xrEnumerateViewConfigurationViews failed: " << result << std::endl;
+		return;
+	}
+
+	for (uint32_t i = 0; i < viewCountOutput; i++) {
+		XrViewConfigurationView viewConfig = configViews[i];
+		XrSwapchainCreateInfo swapchainInfo{ XR_TYPE_SWAPCHAIN_CREATE_INFO };
+		swapchainInfo.arraySize = 1;
+		swapchainInfo.format = GL_SRGB8_ALPHA8; // or whatever your renderer uses
+		swapchainInfo.width = viewConfig.recommendedImageRectWidth;
+		swapchainInfo.height = viewConfig.recommendedImageRectHeight;
+		swapchainInfo.mipCount = 1;
+		swapchainInfo.faceCount = 1;
+		swapchainInfo.sampleCount = 1;
+		swapchainInfo.usageFlags = XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT;
+
+		XrSwapchain swapchain;
+		xrCreateSwapchain(xrSession, &swapchainInfo, &swapchain);
+
+		_swapchains[i].handle = swapchain;
+		_swapchains[i].width = swapchainInfo.width;
+		_swapchains[i].height = swapchainInfo.height;
+
+		// Get OpenGL images
+		uint32_t imageCount = 0;
+		xrEnumerateSwapchainImages(swapchain, 0, &imageCount, nullptr);
+		_swapchains[i].images.resize(imageCount, { XR_TYPE_SWAPCHAIN_IMAGE_OPENGL_KHR });
+		xrEnumerateSwapchainImages(swapchain, imageCount, &imageCount,
+			reinterpret_cast<XrSwapchainImageBaseHeader*>(_swapchains[i].images.data()));
+	}
+
+	std::cout << "Swapchains created for both eyes." << std::endl;
+}
+
+bool Window::CopyFramebufferToSwapchainByBlit_ReadRect(GLuint srcFbo,
+	GLint srcX, GLint srcY, GLsizei srcW, GLsizei srcH,
+	XrSwapchainData& swapchain, uint32_t imageIndex,
+	GLuint dstFboReuse)
+{
+	// Get the swapchain texture
+	GLuint dstTex = swapchain.images[imageIndex].image;
+	if (dstTex == 0) {
+		std::cerr << "Swapchain image is invalid\n";
+		return false;
+	}
+	// Create a temporary FBO on the correct context
+	GLuint dstFbo = 0;
+	glGenFramebuffers(1, &dstFbo);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, dstFbo);
+	glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, dstTex, 0);
+
+	if (glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+		std::cerr << "Swapchain FBO incomplete\n";
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+		glDeleteFramebuffers(1, &dstFbo);
+		return false;
+	}
+
+	// Bind source FBO for reading
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, srcFbo);
+	if (srcFbo == 0) {
+		glReadBuffer(GL_BACK); // default framebuffer
+	}
+
+	// Blit from src to swapchain
+	glBlitFramebuffer(
+		srcX, srcY, srcX + srcW, srcY + srcH,    // src rect
+		0, 0, swapchain.width, swapchain.height, // dst rect
+		GL_COLOR_BUFFER_BIT,
+		GL_LINEAR);
+
+	// 6Clean up
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+	glDeleteFramebuffers(1, &dstFbo);
+
+	glFlush(); // ensure GPU starts processing before xrReleaseSwapchainImage
+
+
+	return true;
 }

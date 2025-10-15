@@ -112,7 +112,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>..\external\glfw\lib\win;..\external\glew\lib\Release\x64;..\external\assimp\lib\Debug\;..\external\glm\lib\win;..\external\openxr\lib\win</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glfw3dll.lib;glew32.lib;opengl32.lib;assimp-vc143-mtd.lib;glm.lib;openxr_loader.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glfw3dll.lib;glew32.lib;opengl32.lib;assimp-vc143-mtd.lib;glm.lib;openxr_loaderd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>copy /Y "..\external\glfw\lib\win\glfw3.dll" "$(TargetDir)"

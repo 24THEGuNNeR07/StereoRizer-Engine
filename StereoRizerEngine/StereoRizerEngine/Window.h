@@ -18,6 +18,13 @@
 #include "Renderer.h"
 #include "GfxAPIUtils.h"
 
+struct XrSwapchainData {
+	XrSwapchain handle = XR_NULL_HANDLE;
+	std::vector<XrSwapchainImageOpenGLKHR> images;
+	int32_t width = 0;
+	int32_t height = 0;
+};
+
 class Window
 {
 public:
@@ -61,10 +68,19 @@ private:
 	XrDebugUtilsMessengerEXT m_debugUtilsMessenger = {};
 
 	XrFormFactor m_formFactor = XR_FORM_FACTOR_HEAD_MOUNTED_DISPLAY;
-	XrSystemId m_systemID = {};
 	XrSystemProperties m_systemProperties = { XR_TYPE_SYSTEM_PROPERTIES };
 
 	GraphicsAPI_Type m_apiType = GraphicsAPI_Type::OpenGL;
 
+	//openxr rendering
+	XrSwapchainData _swapchains[2];
+	void CreateXRSwapchains();
+	bool CopyFramebufferToSwapchainByBlit_ReadRect(GLuint srcFbo,
+		GLint srcX, GLint srcY, GLsizei srcW, GLsizei srcH,
+		XrSwapchainData& swapchain, uint32_t imageIndex,
+		GLuint dstFboReuse);
+
+	HGLRC xrSessionGLRC;
+	HDC xrSessionDC;
 };
 
