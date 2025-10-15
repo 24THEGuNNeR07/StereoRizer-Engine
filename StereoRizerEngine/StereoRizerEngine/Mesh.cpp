@@ -1,5 +1,9 @@
 #include "Mesh.h"
 
+Mesh::Mesh()
+{
+}
+
 Mesh::Mesh(std::string const path)
 {
 	_path = path;

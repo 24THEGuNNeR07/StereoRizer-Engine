@@ -1,7 +1,4 @@
 ﻿#include "Window.h"
-
-#include "VertexArray.h"
-#include "IndexBuffer.h"
 #include "Shader.h"
 
 Window::Window(int width, int height, const char* title)
