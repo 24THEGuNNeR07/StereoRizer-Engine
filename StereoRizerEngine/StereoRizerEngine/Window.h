@@ -17,13 +17,7 @@
 
 #include "Renderer.h"
 #include "GfxAPIUtils.h"
-
-struct XrSwapchainData {
-	XrSwapchain handle = XR_NULL_HANDLE;
-	std::vector<XrSwapchainImageOpenGLKHR> images;
-	int32_t width = 0;
-	int32_t height = 0;
-};
+#include "OpenXRSupport.h"
 
 class Window
 {
@@ -48,39 +42,8 @@ private:
 	Renderer _rightRenderer;
 	void Create();
 	bool _xrInitialized = false;
-	void InitOpenXR();
-	glm::mat4 ConvertXrPoseToMat4(const XrPosef& pose);
-	glm::mat4 ConvertXrFovToProj(const XrFovf& fov, float nearZ, float farZ);
-	void PollXrEvents();
 
-	// OpenXR
-	XrInstance xrInstance{ XR_NULL_HANDLE };
-	XrSystemId xrSystemId{ XR_NULL_SYSTEM_ID };
-	XrSession xrSession{ XR_NULL_HANDLE };
-	XrSpace xrAppSpace{ XR_NULL_HANDLE };
-	XrSessionState currentState = XR_SESSION_STATE_UNKNOWN;
-
-	std::vector<const char*> m_activeAPILayers = {};
-	std::vector<const char*> m_activeInstanceExtensions = {};
-	std::vector<std::string> m_apiLayers = {};
-	std::vector<std::string> m_instanceExtensions = {};
-
-	XrDebugUtilsMessengerEXT m_debugUtilsMessenger = {};
-
-	XrFormFactor m_formFactor = XR_FORM_FACTOR_HEAD_MOUNTED_DISPLAY;
-	XrSystemProperties m_systemProperties = { XR_TYPE_SYSTEM_PROPERTIES };
-
+	OpenXRSupport _xrSupport;
 	GraphicsAPI_Type m_apiType = GraphicsAPI_Type::OpenGL;
-
-	//openxr rendering
-	XrSwapchainData _swapchains[2];
-	void CreateXRSwapchains();
-	bool CopyFramebufferToSwapchainByBlit_ReadRect(GLuint srcFbo,
-		GLint srcX, GLint srcY, GLsizei srcW, GLsizei srcH,
-		XrSwapchainData& swapchain, uint32_t imageIndex,
-		GLuint dstFboReuse);
-
-	HGLRC xrSessionGLRC;
-	HDC xrSessionDC;
 };
 
