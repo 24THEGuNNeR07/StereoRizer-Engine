@@ -1,4 +1,5 @@
 #include "Shader.h"
+#include "Common.h"
 
 Shader::Shader(const std::string& filepath)
 {
@@ -14,10 +15,33 @@ Shader::~Shader()
 	glDeleteProgram(_rendererID);
 }
 
-void Shader::Bind()
+Shader::Shader(Shader&& other) noexcept
 {
-	if(!ReloadIfChanged())
-		glUseProgram(_rendererID);
+	_rendererID = other._rendererID;
+	_filePath = std::move(other._filePath);
+	_lastLog = std::move(other._lastLog);
+	_lastWriteTime = other._lastWriteTime;
+
+	other._rendererID = 0;
+}
+
+Shader& Shader::operator=(Shader&& other) noexcept
+{
+	if (this != &other) {
+		glDeleteProgram(_rendererID);
+		_rendererID = other._rendererID;
+		_filePath = std::move(other._filePath);
+		_lastLog = std::move(other._lastLog);
+		_lastWriteTime = other._lastWriteTime;
+
+		other._rendererID = 0;
+	}
+	return *this;
+}
+
+void Shader::Bind() const
+{
+	glUseProgram(_rendererID);
 }
 
 void Shader::Unbind() const
@@ -30,10 +54,10 @@ bool Shader::ReloadIfChanged()
 	fs::file_time_type currentWriteTime = GetLastWriteTime();
 	if (currentWriteTime != _lastWriteTime) {
 		_lastWriteTime = currentWriteTime;
-		std::cout << "Reloading shader...\n";
+		LOG_INFO("Reloading shader...");
 
 		ShaderProgramSource newSource = ParseShader(_filePath);
-		unsigned int newShader = CreateShader(newSource.VertexSource, newSource.FragmentSource);
+		GLuint newShader = CreateShader(newSource.VertexSource, newSource.FragmentSource);
 		if (newShader != 0) {
 			glDeleteProgram(_rendererID);
 			_rendererID = newShader;
@@ -47,9 +71,9 @@ bool Shader::ReloadIfChanged()
 		return false;
 }
 
-unsigned int Shader::CompileShader(const std::string& source, unsigned int type)
+GLuint Shader::CompileShader(const std::string& source, GLenum type)
 {
-	unsigned int id = glCreateShader(type);
+	GLuint id = glCreateShader(type);
 	const char* src = source.c_str();
 	glShaderSource(id, 1, &src, nullptr);
 	glCompileShader(id);
@@ -62,18 +86,19 @@ unsigned int Shader::CompileShader(const std::string& source, unsigned int type)
 		glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
 		char* message = new char[length]; // or use std::vector<char> for safety
 		glGetShaderInfoLog(id, length, nullptr, message);
-		std::cout << "Failed to compile " << (type == GL_VERTEX_SHADER ? "vertex" : "fragment") << " shader!" << std::endl;
-		std::cout << message << std::endl;
+		LOG_ERROR(std::string("Failed to compile ") + (type == GL_VERTEX_SHADER ? "vertex" : "fragment") + " shader!");
+		LOG_ERROR(message);
+		delete[] message;
 	}
 
 	return id;
 }
 
-unsigned int Shader::CreateShader(const std::string& vertexShader, const std::string& fragmentShader)
+GLuint Shader::CreateShader(const std::string& vertexShader, const std::string& fragmentShader)
 {
-	unsigned int program = glCreateProgram();
-	unsigned int vs = CompileShader(vertexShader, GL_VERTEX_SHADER);
-	unsigned int fs = CompileShader(fragmentShader, GL_FRAGMENT_SHADER);
+	GLuint program = glCreateProgram();
+	GLuint vs = CompileShader(vertexShader, GL_VERTEX_SHADER);
+	GLuint fs = CompileShader(fragmentShader, GL_FRAGMENT_SHADER);
 
 	glAttachShader(program, vs);
 	glAttachShader(program, fs);
@@ -122,7 +147,7 @@ fs::file_time_type Shader::GetLastWriteTime()
 		return fs::last_write_time(_filePath);
 	}
 	catch (fs::filesystem_error& e) {
-		std::cerr << "Error getting last write time for shader file: " << e.what() << std::endl;
+		LOG_ERROR(std::string("Error getting last write time for shader file: ") + e.what());
 		return fs::file_time_type::min();
 	}
 }

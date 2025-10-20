@@ -1,4 +1,5 @@
 ﻿#include "OpenXRSupport.h"
+#include "Common.h"
 
 OpenXRSupport::OpenXRSupport()
 {
@@ -6,19 +7,58 @@ OpenXRSupport::OpenXRSupport()
 
 OpenXRSupport::~OpenXRSupport()
 {
+	// Gracefully tear down OpenXR resources if they were created.
+	// End session if running
+	if (xrSession != XR_NULL_HANDLE) {
+		// Try to end session if active
+		if (currentState == XR_SESSION_STATE_READY || currentState == XR_SESSION_STATE_SYNCHRONIZED || currentState == XR_SESSION_STATE_VISIBLE || currentState == XR_SESSION_STATE_FOCUSED) {
+			xrEndSession(xrSession);
+		}
+
+		// Destroy any swapchains
+		for (auto &sc : _swapchains) {
+			if (sc.handle != XR_NULL_HANDLE) {
+				xrDestroySwapchain(sc.handle);
+				sc.handle = XR_NULL_HANDLE;
+				sc.images.clear();
+			}
+		}
+
+		xrDestroySession(xrSession);
+		xrSession = XR_NULL_HANDLE;
+	}
+
+	if (xrAppSpace != XR_NULL_HANDLE) {
+		xrDestroySpace(xrAppSpace);
+		xrAppSpace = XR_NULL_HANDLE;
+	}
+
+	if (xrInstance != XR_NULL_HANDLE) {
+		xrDestroyInstance(xrInstance);
+		xrInstance = XR_NULL_HANDLE;
+	}
+
+	// Delete GL resources
+	if (xrDstFbo != 0) {
+		glDeleteFramebuffers(1, &xrDstFbo);
+		xrDstFbo = 0;
+	}
 }
 
 bool OpenXRSupport::Init(GraphicsAPI_Type apiType)
 {
-	XrApplicationInfo AI;
-	strncpy(AI.applicationName, "OpenXR Tutorial Chapter 2", XR_MAX_APPLICATION_NAME_SIZE);
+	XrApplicationInfo AI{};
+	strncpy(AI.applicationName, "StereoRizer", XR_MAX_APPLICATION_NAME_SIZE - 1);
 	AI.applicationVersion = 1;
-	strncpy(AI.engineName, "OpenXR Engine", XR_MAX_ENGINE_NAME_SIZE);
+	strncpy(AI.engineName, "StereoRizer Engine", XR_MAX_ENGINE_NAME_SIZE - 1);
 	AI.engineVersion = 1;
 	AI.apiVersion = XR_CURRENT_API_VERSION;
 
+	// request debug utils and the graphics API instance extension
+	m_instanceExtensions.clear();
 	m_instanceExtensions.push_back(XR_EXT_DEBUG_UTILS_EXTENSION_NAME);
-	// Ensure m_apiType is already defined when we call this line.
+	// Use provided apiType, fallback to stored if unspecified
+	m_apiType = apiType;
 	m_instanceExtensions.push_back(GetGraphicsAPIInstanceExtensionString(m_apiType));
 
 	XrResult result;
@@ -27,24 +67,20 @@ bool OpenXRSupport::Init(GraphicsAPI_Type apiType)
 	std::vector<XrApiLayerProperties> apiLayerProperties;
 	result = xrEnumerateApiLayerProperties(0, &apiLayerCount, nullptr);
 	if (result != XR_SUCCESS) {
-		std::cerr << "Failed to enumerate API layer properties." << std::endl;
+		LOG_ERROR("Failed to enumerate API layer properties.");
 		return false;
 	}
 	apiLayerProperties.resize(apiLayerCount, { XR_TYPE_API_LAYER_PROPERTIES });
 	result = xrEnumerateApiLayerProperties(apiLayerCount, &apiLayerCount, apiLayerProperties.data());
 	if (result != XR_SUCCESS) {
-		std::cerr << "Failed to enumerate API layer properties." << std::endl;
+		LOG_ERROR("Failed to enumerate API layer properties.");
 		return false;
 	}
 
-	// Check the requested API layers against the ones from the OpenXR. If found add it to the Active API Layers.
+	// Check requested API layers against available ones and enable matches
 	for (auto& requestLayer : m_apiLayers) {
 		for (auto& layerProperty : apiLayerProperties) {
-			// strcmp returns 0 if the strings match.
-			if (strcmp(requestLayer.c_str(), layerProperty.layerName) != 0) {
-				continue;
-			}
-			else {
+			if (strcmp(requestLayer.c_str(), layerProperty.layerName) == 0) {
 				m_activeAPILayers.push_back(requestLayer.c_str());
 				break;
 			}
@@ -58,24 +94,18 @@ bool OpenXRSupport::Init(GraphicsAPI_Type apiType)
 	extensionProperties.resize(extensionCount, { XR_TYPE_EXTENSION_PROPERTIES });
 	xrEnumerateInstanceExtensionProperties(nullptr, extensionCount, &extensionCount, extensionProperties.data());
 
-	// Check the requested Instance Extensions against the ones from the OpenXR runtime.
-	// If an extension is found add it to Active Instance Extensions.
-	// Log error if the Instance Extension is not found.
+	// Check requested instance extensions against available ones
 	for (auto& requestedInstanceExtension : m_instanceExtensions) {
 		bool found = false;
 		for (auto& extensionProperty : extensionProperties) {
-			// strcmp returns 0 if the strings match.
-			if (strcmp(requestedInstanceExtension.c_str(), extensionProperty.extensionName) != 0) {
-				continue;
-			}
-			else {
+			if (strcmp(requestedInstanceExtension.c_str(), extensionProperty.extensionName) == 0) {
 				m_activeInstanceExtensions.push_back(requestedInstanceExtension.c_str());
 				found = true;
 				break;
 			}
 		}
 		if (!found) {
-			std::cerr << "Failed to find OpenXR instance extension: " << requestedInstanceExtension << std::endl;
+			LOG_ERROR(std::string("Warning: OpenXR instance extension not available: ") + requestedInstanceExtension);
 		}
 	}
 
@@ -89,12 +119,12 @@ bool OpenXRSupport::Init(GraphicsAPI_Type apiType)
 	result = xrCreateInstance(&instanceCI, &xrInstance);
 
 	if (result != XR_SUCCESS) {
-		std::cerr << "Failed to create XR instance." << std::endl;
-		std::cerr << "Error code: " << result << std::endl;
+		LOG_ERROR("Failed to create XR instance.");
+		LOG_ERROR(std::string("Error code: ") + std::to_string(result));
 		return false;
 	}
 	else {
-		std::cout << "XR Instance created successfully." << std::endl;
+		LOG_INFO("XR Instance created successfully.");
 	}
 
 	// Get system ID (headset)
@@ -102,24 +132,24 @@ bool OpenXRSupport::Init(GraphicsAPI_Type apiType)
 	systemInfo.formFactor = XR_FORM_FACTOR_HEAD_MOUNTED_DISPLAY;
 	result = xrGetSystem(xrInstance, &systemInfo, &xrSystemId);
 	if (XR_FAILED(result)) {
-		std::cerr << "Failed to get OpenXR system\n";
+		LOG_ERROR("Failed to get OpenXR system");
 		return false;
 	}
 
-	// Load graphics requirements function
+	// Load graphics requirements function and query requirements (if available)
 	PFN_xrGetOpenGLGraphicsRequirementsKHR pfnGetOpenGLGraphicsRequirementsKHR = nullptr;
-	xrGetInstanceProcAddr(
+	if (xrGetInstanceProcAddr(
 		xrInstance,
 		"xrGetOpenGLGraphicsRequirementsKHR",
-		reinterpret_cast<PFN_xrVoidFunction*>(&pfnGetOpenGLGraphicsRequirementsKHR)
-	);
-
-	// Query requirements
-	XrGraphicsRequirementsOpenGLKHR graphicsRequirements{ XR_TYPE_GRAPHICS_REQUIREMENTS_OPENGL_KHR };
-	result = pfnGetOpenGLGraphicsRequirementsKHR(xrInstance, xrSystemId, &graphicsRequirements);
-	if (XR_FAILED(result)) {
-		std::cerr << "Failed to get OpenGL graphics requirements\n";
-		return false;
+		reinterpret_cast<PFN_xrVoidFunction*>(&pfnGetOpenGLGraphicsRequirementsKHR)) == XR_SUCCESS &&
+		pfnGetOpenGLGraphicsRequirementsKHR != nullptr)
+	{
+		XrGraphicsRequirementsOpenGLKHR graphicsRequirements{ XR_TYPE_GRAPHICS_REQUIREMENTS_OPENGL_KHR };
+		result = pfnGetOpenGLGraphicsRequirementsKHR(xrInstance, xrSystemId, &graphicsRequirements);
+		if (XR_FAILED(result)) {
+			LOG_ERROR("Failed to get OpenGL graphics requirements");
+			// non-fatal for now, continue
+		}
 	}
 
 	// Create session (using OpenGL graphics binding)
@@ -136,7 +166,7 @@ bool OpenXRSupport::Init(GraphicsAPI_Type apiType)
 
 	result = xrCreateSession(xrInstance, &sessionCreateInfo, &xrSession);
 	if (XR_FAILED(result)) {
-		std::cerr << "Failed to create OpenXR session\n";
+		LOG_ERROR("Failed to create OpenXR session");
 		return false;
 	}
 
@@ -146,7 +176,7 @@ bool OpenXRSupport::Init(GraphicsAPI_Type apiType)
 
 	result = xrCreateReferenceSpace(xrSession, &spaceInfo, &xrAppSpace);
 	if (XR_FAILED(result)) {
-		std::cerr << "Failed to create reference space\n";
+		LOG_ERROR("Failed to create reference space");
 		return false;
 	}
 
@@ -168,14 +198,14 @@ void OpenXRSupport::PollEvents()
 				XrSessionBeginInfo beginInfo{ XR_TYPE_SESSION_BEGIN_INFO };
 				beginInfo.primaryViewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
 				xrBeginSession(xrSession, &beginInfo);
-				std::cout << "XR session started!" << std::endl;
+				LOG_INFO("XR session started!");
 			}
 			else if (currentState == XR_SESSION_STATE_STOPPING) {
 				xrEndSession(xrSession);
-				std::cout << "XR session stopping." << std::endl;
+				LOG_INFO("XR session stopping.");
 			}
 			else if (currentState == XR_SESSION_STATE_EXITING || currentState == XR_SESSION_STATE_LOSS_PENDING) {
-				std::cout << "XR session exiting or lost." << std::endl;
+				LOG_INFO("XR session exiting or lost.");
 			}
 			break;
 		}
@@ -188,7 +218,7 @@ void OpenXRSupport::PollEvents()
 	}
 }
 
-glm::mat4 OpenXRSupport::ConvertXrPoseToMat4(int eyeIndex)
+glm::mat4 OpenXRSupport::ConvertXrPoseToMat4(int eyeIndex) const
 {
 	// Convert orientation and position to GLM types
 	glm::quat orientation(views[eyeIndex].pose.orientation.w, 
@@ -206,7 +236,7 @@ glm::mat4 OpenXRSupport::ConvertXrPoseToMat4(int eyeIndex)
 	return glm::inverse(worldFromPose);
 }
 
-glm::mat4 OpenXRSupport::ConvertXrFovToProj(int eyeIndex, float nearZ, float farZ)
+glm::mat4 OpenXRSupport::ConvertXrFovToProj(int eyeIndex, float nearZ, float farZ) const
 {
 	float tanLeft = tan(views[eyeIndex].fov.angleLeft);
 	float tanRight = tan(views[eyeIndex].fov.angleRight);
@@ -239,19 +269,24 @@ bool OpenXRSupport::CopyFramebufferToSwapchainByBlit_ReadRect(GLuint srcFbo,
 	// Get the swapchain texture
 	GLuint dstTex = swapchain.images[imageIndex].image;
 	if (dstTex == 0) {
-		std::cerr << "Swapchain image is invalid\n";
+		LOG_ERROR("Swapchain image is invalid");
 		return false;
 	}
-	// Create a temporary FBO on the correct context
+
+	// Create / bind a temporary FBO to attach the swapchain texture
 	GLuint dstFbo = 0;
-	glGenFramebuffers(1, &dstFbo);
+	if (dstFboReuse != 0) {
+		dstFbo = dstFboReuse;
+	} else {
+		glGenFramebuffers(1, &dstFbo);
+	}
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, dstFbo);
 	glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, dstTex, 0);
 
 	if (glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-		std::cerr << "Swapchain FBO incomplete\n";
+		LOG_ERROR("Swapchain FBO incomplete");
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-		glDeleteFramebuffers(1, &dstFbo);
+		if (dstFboReuse == 0) glDeleteFramebuffers(1, &dstFbo);
 		return false;
 	}
 
@@ -268,13 +303,14 @@ bool OpenXRSupport::CopyFramebufferToSwapchainByBlit_ReadRect(GLuint srcFbo,
 		GL_COLOR_BUFFER_BIT,
 		GL_LINEAR);
 
-	// 6Clean up
+	// Cleanup - unbind. If we created the FBO here, delete it; otherwise leave reuse buffer intact.
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-	glDeleteFramebuffers(1, &dstFbo);
+	if (dstFboReuse == 0) {
+		glDeleteFramebuffers(1, &dstFbo);
+	}
 
 	glFlush(); // ensure GPU starts processing before xrReleaseSwapchainImage
-
 
 	return true;
 }
@@ -282,12 +318,13 @@ bool OpenXRSupport::CopyFramebufferToSwapchainByBlit_ReadRect(GLuint srcFbo,
 void OpenXRSupport::InitLoop(int width, int height)
 {
 	// persistent dstFbo (create once)
-	xrDstFbo = 0;
-	glGenFramebuffers(1, &xrDstFbo);
+	if (xrDstFbo == 0) {
+		glGenFramebuffers(1, &xrDstFbo);
+	}
 
 	srcFbo = 0;
-	int srcWidth = width;
-	int srcHeight = height;
+	srcWidth = width; // assign to members (no shadowing)
+	srcHeight = height;
 }
 
 void OpenXRSupport::WaitFrame()
@@ -296,7 +333,7 @@ void OpenXRSupport::WaitFrame()
 	
 	res = xrWaitFrame(xrSession, nullptr, &frameState);
 	if (XR_FAILED(res)) {
-		std::cerr << "xrWaitFrame failed: " << res << std::endl;
+		LOG_ERROR(std::string("xrWaitFrame failed: ") + std::to_string(res));
 	}
 }
 
@@ -305,7 +342,7 @@ void OpenXRSupport::BeginFrame()
 	XrResult res;
 	res = xrBeginFrame(xrSession, nullptr);
 	if (XR_FAILED(res)) {
-		std::cerr << "xrBeginFrame failed: " << res << std::endl;
+		LOG_ERROR(std::string("xrBeginFrame failed: ") + std::to_string(res));
 	}
 }
 
@@ -323,7 +360,7 @@ void OpenXRSupport::CreateXRSwapchains()
 		nullptr);
 
 	if (XR_FAILED(result)) {
-		std::cerr << "First xrEnumerateViewConfigurationViews failed: " << result << std::endl;
+		LOG_ERROR(std::string("First xrEnumerateViewConfigurationViews failed: ") + std::to_string(result));
 		return;
 	}
 
@@ -340,7 +377,7 @@ void OpenXRSupport::CreateXRSwapchains()
 		configViews.data());
 
 	if (XR_FAILED(result)) {
-		std::cerr << "Second xrEnumerateViewConfigurationViews failed: " << result << std::endl;
+		LOG_ERROR(std::string("Second xrEnumerateViewConfigurationViews failed: ") + std::to_string(result));
 		return;
 	}
 
@@ -371,7 +408,7 @@ void OpenXRSupport::CreateXRSwapchains()
 			reinterpret_cast<XrSwapchainImageBaseHeader*>(_swapchains[i].images.data()));
 	}
 
-	std::cout << "Swapchains created for both eyes." << std::endl;
+	LOG_INFO("Swapchains created for both eyes.");
 }
 
 void OpenXRSupport::LocateViews()
@@ -385,7 +422,7 @@ void OpenXRSupport::LocateViews()
 	uint32_t viewCountOutput = 0;
 	res = xrLocateViews(xrSession, &locateInfo, &viewState, 2, &viewCountOutput, views);
 	if (XR_FAILED(res) || viewCountOutput < 2) {
-		std::cerr << "xrLocateViews failed or returned <2 views: " << res << ", count=" << viewCountOutput << std::endl;
+		LOG_ERROR(std::string("xrLocateViews failed or returned <2 views: ") + std::to_string(res) + ", count=" + std::to_string(viewCountOutput));
 	}
 }
 
@@ -407,7 +444,7 @@ void OpenXRSupport::CopyFrameBuffer()
 	{
 		XrSwapchainData& sc = _swapchains[eye];
 		if (sc.handle == XR_NULL_HANDLE || sc.images.empty()) {
-			std::cerr << "Swapchain for eye " << eye << " invalid\n";
+			LOG_ERROR(std::string("Swapchain for eye ") + std::to_string(eye) + " invalid");
 			continue;
 		}
 
@@ -416,7 +453,7 @@ void OpenXRSupport::CopyFrameBuffer()
 		XrSwapchainImageAcquireInfo acquireInfo{ XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO };
 		res = xrAcquireSwapchainImage(sc.handle, &acquireInfo, &imageIndex);
 		if (XR_FAILED(res)) {
-			std::cerr << "xrAcquireSwapchainImage failed for eye " << eye << ": " << res << std::endl;
+			LOG_ERROR(std::string("xrAcquireSwapchainImage failed for eye ") + std::to_string(eye) + ": " + std::to_string(res));
 			continue;
 		}
 
@@ -425,7 +462,7 @@ void OpenXRSupport::CopyFrameBuffer()
 		waitInfo.timeout = XR_INFINITE_DURATION;
 		res = xrWaitSwapchainImage(sc.handle, &waitInfo);
 		if (XR_FAILED(res)) {
-			std::cerr << "xrWaitSwapchainImage failed for eye " << eye << ": " << res << std::endl;
+			LOG_ERROR(std::string("xrWaitSwapchainImage failed for eye ") + std::to_string(eye) + ": " + std::to_string(res));
 			// best effort release
 			XrSwapchainImageReleaseInfo releaseInfo{ XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO };
 			xrReleaseSwapchainImage(sc.handle, &releaseInfo);
@@ -445,7 +482,7 @@ void OpenXRSupport::CopyFrameBuffer()
 			sc, imageIndex, xrDstFbo);
 
 		if (!ok) {
-			std::cerr << "CopyFramebufferToSwapchainByBlit failed for eye " << eye << std::endl;
+			LOG_ERROR(std::string("CopyFramebufferToSwapchainByBlit failed for eye ") + std::to_string(eye));
 			// fallback: you could render a fullscreen quad into swapchain texture using src as texture
 		}
 
@@ -453,7 +490,7 @@ void OpenXRSupport::CopyFrameBuffer()
 		XrSwapchainImageReleaseInfo releaseInfo{ XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO };
 		res = xrReleaseSwapchainImage(sc.handle, &releaseInfo);
 		if (XR_FAILED(res)) {
-			std::cerr << "xrReleaseSwapchainImage failed for eye " << eye << ": " << res << std::endl;
+			LOG_ERROR(std::string("xrReleaseSwapchainImage failed for eye ") + std::to_string(eye) + ": " + std::to_string(res));
 		}
 
 		// Fill composition layer view
@@ -482,11 +519,14 @@ void OpenXRSupport::CopyFrameBuffer()
 
 	res = xrEndFrame(xrSession, &endInfo);
 	if (XR_FAILED(res)) {
-		std::cerr << "xrEndFrame failed: " << res << std::endl;
+		LOG_ERROR(std::string("xrEndFrame failed: ") + std::to_string(res));
 	}
 }
 
 void OpenXRSupport::EndLoop()
 {
-	glDeleteFramebuffers(1, &xrDstFbo);
+	if (xrDstFbo != 0) {
+		glDeleteFramebuffers(1, &xrDstFbo);
+		xrDstFbo = 0;
+	}
 }

@@ -11,6 +11,7 @@
 #include "openxr/openxr_platform.h"
 
 #include <vector>
+#include <string>
 #include <iostream>
 
 #include <GL/glew.h>
@@ -19,6 +20,7 @@
 
 #include "GfxAPIUtils.h"
 
+// Small POD for a swapchain and its OpenGL images
 struct XrSwapchainData {
     XrSwapchain handle = XR_NULL_HANDLE;
     std::vector<XrSwapchainImageOpenGLKHR> images;
@@ -26,43 +28,46 @@ struct XrSwapchainData {
     int32_t height = 0;
 };
 
+// Thin helper to manage OpenXR integration for rendering loop.
+// Responsibilities:
+// - create instance, session and swapchains
+// - provide per-frame helpers: Wait/Begin/Locate/Copy/End
+// - keep OpenGL objects minimal and reuse FBOs where possible
 class OpenXRSupport
 {
 public:
     OpenXRSupport();
     ~OpenXRSupport();
 
-    // initialize OpenXR with a chosen graphics API type
+    // Initialize OpenXR. apiType currently only influences instance extensions.
     bool Init(GraphicsAPI_Type apiType);
 
-    // poll runtime events (session state changes etc.)
+    // Poll runtime events (session state changes etc.)
     void PollEvents();
 
-    // helpers used by Window for rendering
-    glm::mat4 ConvertXrPoseToMat4(int eyeIndex);
-    glm::mat4 ConvertXrFovToProj(int eyeIndex, float nearZ, float farZ);
+    // Helpers used by the Window/Renderer
+    glm::mat4 ConvertXrPoseToMat4(int eyeIndex) const;
+    glm::mat4 ConvertXrFovToProj(int eyeIndex, float nearZ, float farZ) const;
 
+    // Copy a rectangle from a source FBO into the swapchain image via blit.
     bool CopyFramebufferToSwapchainByBlit_ReadRect(GLuint srcFbo,
         GLint srcX, GLint srcY, GLsizei srcW, GLsizei srcH,
         XrSwapchainData& swapchain, uint32_t imageIndex,
         GLuint dstFboReuse);
 
-    // accessors
+    // Accessors
     XrSession GetSession() const { return xrSession; }
     XrSpace GetAppSpace() const { return xrAppSpace; }
     XrSwapchainData* GetSwapchains() { return _swapchains; }
 
-	void InitLoop(int width, int height);
-
-	void WaitFrame();
-	void BeginFrame();
+    // Frame loop helpers
+    void InitLoop(int width, int height);
+    void WaitFrame();
+    void BeginFrame();
     void LocateViews();
-
     void SetFrameSize(int width, int height);
-
     void CopyFrameBuffer();
-
-	void EndLoop();
+    void EndLoop();
 
 private:
     // OpenXR state
@@ -72,10 +77,10 @@ private:
     XrSpace xrAppSpace{ XR_NULL_HANDLE };
     XrSessionState currentState = XR_SESSION_STATE_UNKNOWN;
 
-    std::vector<const char*> m_activeAPILayers = {};
-    std::vector<const char*> m_activeInstanceExtensions = {};
-    std::vector<std::string> m_apiLayers = {};
-    std::vector<std::string> m_instanceExtensions = {};
+    std::vector<const char*> m_activeAPILayers;
+    std::vector<const char*> m_activeInstanceExtensions;
+    std::vector<std::string> m_apiLayers;
+    std::vector<std::string> m_instanceExtensions;
 
     XrDebugUtilsMessengerEXT m_debugUtilsMessenger = {};
 
@@ -84,7 +89,7 @@ private:
 
     GraphicsAPI_Type m_apiType = GraphicsAPI_Type::OpenGL;
 
-    // openxr rendering
+    // rendering resources
     XrSwapchainData _swapchains[2];
 
     HGLRC xrSessionGLRC = nullptr;
@@ -99,10 +104,10 @@ private:
     XrViewState viewState{ XR_TYPE_VIEW_STATE };
     XrViewLocateInfo locateInfo{ XR_TYPE_VIEW_LOCATE_INFO };
 
-    // persistent dstFbo (create once)
-    GLuint xrDstFbo;
-    GLuint srcFbo;
-    int srcWidth;
-    int srcHeight;
+    // persistent dst FBO (created once in InitLoop)
+    GLuint xrDstFbo = 0;
+    GLuint srcFbo = 0;
+    int srcWidth = 0;
+    int srcHeight = 0;
 };
 

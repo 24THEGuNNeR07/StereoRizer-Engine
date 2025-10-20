@@ -1,5 +1,6 @@
 ﻿#include "Window.h"
 #include "Shader.h"
+#include "Common.h"
 
 Window::Window(int width, int height, const char* title)
 {
@@ -37,7 +38,13 @@ void Window::SwapBuffers()
 	glfwSwapBuffers(_window);
 }
 
-void Window::Run(Model& model)
+void Window::UploadModel(Model& model)
+{
+	if (_model) delete _model;
+	_model = new Model(std::move(model));
+}
+
+void Window::Run()
 {
 	if (_xrInitialized)
 		_xrSupport.InitLoop(_width, _height);
@@ -47,7 +54,7 @@ void Window::Run(Model& model)
 		glfwMakeContextCurrent(_window); // force same context before every frame
 
 		glfwGetFramebufferSize(_window, &_width, &_height);
-		
+
 		if (_xrInitialized)
 			_xrSupport.SetFrameSize(_width, _height);
 
@@ -57,44 +64,24 @@ void Window::Run(Model& model)
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		if (_xrInitialized)
-		{
-			_xrSupport.PollEvents();
-			_xrSupport.WaitFrame();
-			_xrSupport.BeginFrame();
-			_xrSupport.LocateViews();
+			HandleXRFrame();
 
-			// --- Render the scene once into window backbuffer (left/right halves) ---
-			// Set left camera and draw to left half
-			glm::mat4 leftView = _xrSupport.ConvertXrPoseToMat4(0);
-			glm::mat4 leftProj = _xrSupport.ConvertXrFovToProj(0, 0.1f, 100.0f);
-			_leftRenderer.SetCamera(leftView, leftProj);
-
-			// Set right camera and draw to right half
-			glm::mat4 rightView = _xrSupport.ConvertXrPoseToMat4(1);
-			glm::mat4 rightProj = _xrSupport.ConvertXrFovToProj(1, 0.1f, 100.0f);
-			_rightRenderer.SetCamera(rightView, rightProj);
+		if (_model) {
+			glViewport(0, 0, _width / 2, _height);
+			_leftRenderer.Draw(*_model);
+			glViewport(_width / 2, 0, _width / 2, _height);
+			_rightRenderer.Draw(*_model);
 		}
-		
-
-		
-		glViewport(0, 0, _width / 2, _height);
-		_leftRenderer.Draw(model);
-
-		
-		glViewport(_width / 2, 0, _width / 2, _height);
-		_rightRenderer.Draw(model);
 
 		// Ensure all draws are finished into backbuffer before we read from it
-		// (glFlush should be sufficient usually; use glFinish for debugging)
 		glFlush();
 
 		if (_xrInitialized)
 			_xrSupport.CopyFrameBuffer();
-		
-		SwapBuffers();
 
+		SwapBuffers();
 		PollEvents();
-	} // end while
+	}
 
 	// cleanup dstFbo
 	if (_xrInitialized)
@@ -124,8 +111,28 @@ void Window::Create()
 	glewInit();
 
 	// DEBUG: Check GPU
-	std::cerr << "GL Renderer: " << glGetString(GL_RENDERER) << std::endl;
+	LOG_INFO(std::string("GL Renderer: ") + reinterpret_cast<const char*>(glGetString(GL_RENDERER)));
 
 	// Now create OpenXR session, passing this context in graphics binding
 	_xrInitialized = _xrSupport.Init(m_apiType);
+}
+
+// Helper for XR frame lifecycle and camera setup
+void Window::HandleXRFrame() {
+	_xrSupport.PollEvents();
+	_xrSupport.WaitFrame();
+	_xrSupport.BeginFrame();
+	_xrSupport.LocateViews();
+
+	// Set left camera
+	glm::mat4 leftView = _xrSupport.ConvertXrPoseToMat4(0);
+	glm::mat4 leftProj = _xrSupport.ConvertXrFovToProj(0, 0.1f, 100.0f);
+	_leftRenderer.GetCamera().SetViewMatrix(leftView);
+	_leftRenderer.GetCamera().SetProjectionMatrix(leftProj);
+
+	// Set right camera
+	glm::mat4 rightView = _xrSupport.ConvertXrPoseToMat4(1);
+	glm::mat4 rightProj = _xrSupport.ConvertXrFovToProj(1, 0.1f, 100.0f);
+	_rightRenderer.GetCamera().SetViewMatrix(rightView);
+	_rightRenderer.GetCamera().SetProjectionMatrix(rightProj);
 }

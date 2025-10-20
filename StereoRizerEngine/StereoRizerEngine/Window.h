@@ -28,22 +28,24 @@ public:
 	void Destroy();
 	void PollEvents();
 	void SwapBuffers();
-	void Run(Model& model);
+	void UploadModel(Model& model);
+	void Run();
 
 	int GetWidth() const;
 	int GetHeight() const;
 
-private:
 	int _width;
 	int _height;
 	const char* _title;
 	GLFWwindow* _window;
 	Renderer _leftRenderer;
 	Renderer _rightRenderer;
+	Model* _model = nullptr;
 	void Create();
 	bool _xrInitialized = false;
 
 	OpenXRSupport _xrSupport;
 	GraphicsAPI_Type m_apiType = GraphicsAPI_Type::OpenGL;
+	void HandleXRFrame();
 };
 

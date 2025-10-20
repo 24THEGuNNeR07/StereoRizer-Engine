@@ -14,27 +14,29 @@ struct ShaderProgramSource {
 	std::string FragmentSource;
 };
 
-class Shader
-{
+class Shader {
+public:
+	explicit Shader(const std::string& filepath);
+	~Shader();
+
+	Shader(Shader&& other) noexcept;
+	Shader& operator=(Shader&& other) noexcept;
+
+	void Bind() const;
+	void Unbind() const;
+	bool ReloadIfChanged();
+	GLuint GetID() const noexcept { return _rendererID; }
+	std::string GetLastCompileLog() const { return _lastLog; }
+
 private:
-	unsigned int _rendererID;
+	GLuint _rendererID = 0;
 	std::string _filePath;
+	std::string _lastLog;
 	fs::file_time_type _lastWriteTime;
 
-public:
-	Shader(const std::string& filepath);
-	~Shader();
-	void Bind();
-	void Unbind() const;
-	unsigned int GetID() const { return _rendererID; }
-	
-	//void SetUniform4f(const std::string& name, float v0, float v1, float v2, float v3);
-
-private:
-	//int GetUniformLocation(const std::string& name);
-	unsigned int CompileShader(const std::string& source, unsigned int type);
-	unsigned int CreateShader(const std::string& vertexShader, const std::string& fragmentShader);
 	ShaderProgramSource ParseShader(const std::string& filepath);
 	fs::file_time_type GetLastWriteTime();
-	bool ReloadIfChanged();
+
+	GLuint CreateShader(const std::string& vertexShader, const std::string& fragmentShader);
+	GLuint CompileShader(const std::string& source, GLenum type);
 };

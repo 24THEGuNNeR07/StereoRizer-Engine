@@ -1,22 +1,65 @@
 #include "Mesh.h"
+#include "Common.h"
 
 Mesh::Mesh()
 {
 }
 
-Mesh::Mesh(std::string const path)
+Mesh::Mesh(const std::string& path)
 {
 	_path = path;
-
 	ProcessMesh();
-
 	this->vertices = vertices;
 	this->indices = indices;
-
 	SetupMesh();
 }
 
-void Mesh::Draw()
+Mesh::~Mesh()
+{
+	if (VAO != 0) {
+		glDeleteVertexArrays(1, &VAO);
+		VAO = 0;
+	}
+	if (VBO != 0) {
+		glDeleteBuffers(1, &VBO);
+		VBO = 0;
+	}
+	if (EBO != 0) {
+		glDeleteBuffers(1, &EBO);
+		EBO = 0;
+	}
+}
+
+Mesh::Mesh(Mesh&& other) noexcept
+{
+	// Steal resources
+	vertices = std::move(other.vertices);
+	indices = std::move(other.indices);
+	VAO = other.VAO; other.VAO = 0;
+	VBO = other.VBO; other.VBO = 0;
+	EBO = other.EBO; other.EBO = 0;
+	_path = std::move(other._path);
+}
+
+Mesh& Mesh::operator=(Mesh&& other) noexcept
+{
+	if (this != &other) {
+		// free existing resources
+		if (VAO != 0) glDeleteVertexArrays(1, &VAO);
+		if (VBO != 0) glDeleteBuffers(1, &VBO);
+		if (EBO != 0) glDeleteBuffers(1, &EBO);
+
+		vertices = std::move(other.vertices);
+		indices = std::move(other.indices);
+		VAO = other.VAO; other.VAO = 0;
+		VBO = other.VBO; other.VBO = 0;
+		EBO = other.EBO; other.EBO = 0;
+		_path = std::move(other._path);
+	}
+	return *this;
+}
+
+void Mesh::Draw() const
 {
 	glBindVertexArray(VAO);
 	glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(indices.size()), GL_UNSIGNED_INT, 0);
@@ -26,37 +69,31 @@ void Mesh::Draw()
 void Mesh::SetupMesh()
 {
 	// create buffers/arrays
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
-	glGenBuffers(1, &EBO);
+	if (VAO == 0) glGenVertexArrays(1, &VAO);
+	if (VBO == 0) glGenBuffers(1, &VBO);
+	if (EBO == 0) glGenBuffers(1, &EBO);
 
 	glBindVertexArray(VAO);
+
 	// load data into vertex buffers
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	// A great thing about structs is that their memory layout is sequential for all its items.
-	// The effect is that we can simply pass a pointer to the struct and it translates perfectly to a glm::vec3/2 array which
-	// again translates to 3/2 floats which translates to a byte array.
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
+	if (!vertices.empty())
+		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
+	else
+		glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
+	if (!indices.empty())
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
+	else
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, 0, nullptr, GL_STATIC_DRAW);
 
-	// set the vertex attribute pointers
-		// vertex Positions
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Position));
-	// vertex normals
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Normal));
-	// vertex texture coords
-	//glEnableVertexAttribArray(2);
-	//glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, TexCoords));
-	//// vertex tangent
-	//glEnableVertexAttribArray(3);
-	//glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Tangent));
-	//// vertex bitangent
-	//glEnableVertexAttribArray(4);
-	//glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Bitangent));
+	// set the vertex attribute pointers using explicit layout
+	auto attributes = GetVertexAttributes();
+	for (const auto& attr : attributes) {
+		glEnableVertexAttribArray(attr.index);
+		glVertexAttribPointer(attr.index, attr.size, attr.type, attr.normalized, sizeof(Vertex), reinterpret_cast<const void*>(attr.offset));
+	}
 
 	glBindVertexArray(0);
 }
@@ -68,12 +105,12 @@ void Mesh::ProcessMesh()
 
 	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) // if is Not Zero
 	{
-		std::cout << "ERROR::ASSIMP:: " << importer.GetErrorString() << std::endl;
+		LOG_ERROR(std::string("ERROR::ASSIMP:: ") + importer.GetErrorString());
 		return;
 	}
 	else {
-		std::cout << "Loaded model successfully!" << std::endl;
-		std::cout << "Number of meshes: " << scene->mNumMeshes << std::endl;
+		LOG_INFO("Loaded model successfully!");
+		LOG_INFO(std::string("Number of meshes: ") + std::to_string(scene->mNumMeshes));
 	}
 
 	ProcessMeshInternally(scene->mMeshes[0]);
@@ -102,28 +139,7 @@ void Mesh::ProcessMeshInternally(aiMesh* mesh)
 			vector.z = mesh->mNormals[i].z;
 			vertex.Normal = vector;
 		}
-		// texture coordinates
-		//if (mesh->mTextureCoords[0]) // does the mesh contain texture coordinates?
-		//{
-		//	glm::vec2 vec;
-		//	// a vertex can contain up to 8 different texture coordinates. We thus make the assumption that we won't 
-		//	// use models where a vertex can have multiple texture coordinates so we always take the first set (0).
-		//	vec.x = mesh->mTextureCoords[0][i].x;
-		//	vec.y = mesh->mTextureCoords[0][i].y;
-		//	vertex.TexCoords = vec;
-		//	// tangent
-		//	vector.x = mesh->mTangents[i].x;
-		//	vector.y = mesh->mTangents[i].y;
-		//	vector.z = mesh->mTangents[i].z;
-		//	vertex.Tangent = vector;
-		//	// bitangent
-		//	vector.x = mesh->mBitangents[i].x;
-		//	vector.y = mesh->mBitangents[i].y;
-		//	vector.z = mesh->mBitangents[i].z;
-		//	vertex.Bitangent = vector;
-		//}
-		//else
-		//	vertex.TexCoords = glm::vec2(0.0f, 0.0f);
+
 		vertices.push_back(vertex);
 	}
 	// now wak through each of the mesh's faces (a face is a mesh its triangle) and retrieve the corresponding vertex indices.

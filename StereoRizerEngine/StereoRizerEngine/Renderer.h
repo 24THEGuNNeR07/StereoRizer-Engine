@@ -5,16 +5,18 @@
 #include "Model.h"
 #include "Camera.h"
 
-class Renderer
-{
+class Renderer {
 public:
-	Renderer() = default;
-	~Renderer() = default;
+	Renderer();
+	~Renderer();
 
-	void Draw(Model& model);
+	void SetCamera(const Camera& camera); // Accepts external camera
+	Camera& GetCamera();                  // Access internal camera
+
 	void Clear();
-	void SetCamera(glm::mat4 view, glm::mat4 proj);
+	void Draw(const Model& model);
+
 private:
-	Camera _camera = Camera(45.0f, 4.0f / 3.0f, 0.1f, 100.0f);
+	Camera _camera;
 };
 

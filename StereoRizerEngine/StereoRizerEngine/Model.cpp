@@ -1,23 +1,55 @@
+
 #include "Model.h"
+#include "Common.h"
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
-Model::Model(std::string meshPath, std::string shaderPath) :
-	_mesh(meshPath), _shader(shaderPath)
+
+
+Model::Model(Mesh mesh, Shader shader)
+	: _mesh(std::move(mesh)), _shader(std::move(shader))
 {
-	_transform = glm::mat4(1.0f);
-	_transform = glm::translate(_transform, glm::vec3(0.0f, 0.0f, -3.0f));
-
-	_transform = glm::rotate(_transform, glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 }
 
-Model::~Model()
-{
+Model::~Model() = default;
 
+
+
+Model::Model(Model&& other) noexcept
+	: _mesh(std::move(other._mesh)), _shader(std::move(other._shader)), _transform(other._transform) {}
+
+
+
+Model& Model::operator=(Model&& other) noexcept {
+	if (this != &other) {
+		_mesh = std::move(other._mesh);
+		_shader = std::move(other._shader);
+		_transform = other._transform;
+	}
+	return *this;
 }
 
-void Model::Draw()
-{
-	unsigned int transformLoc = glGetUniformLocation(_shader.GetID(), "modelMatrix");
-	glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(_transform));
+
+
+void Model::Draw() const {
 	_shader.Bind();
+	GLint modelLoc = glGetUniformLocation(_shader.GetID(), "modelMatrix");
+	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(_transform));
 	_mesh.Draw();
+	_shader.Unbind();
+}
+
+
+// --- Transformations ---
+
+void Model::Translate(const glm::vec3& offset) {
+	_transform = glm::translate(_transform, offset);
+}
+
+void Model::Rotate(float angle, const glm::vec3& axis) {
+	_transform = glm::rotate(_transform, glm::radians(angle), axis);
+}
+
+void Model::Scale(const glm::vec3& scale) {
+	_transform = glm::scale(_transform, scale);
 }
