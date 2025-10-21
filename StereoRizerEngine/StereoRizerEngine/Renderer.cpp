@@ -1,18 +1,24 @@
+
 #include "Renderer.h"
 
-void Renderer::Draw(Model& model)
-{
-	_camera.SetShaderUnifroms(model.GetShader());
-	model.Draw();
+Renderer::Renderer()
+	: _camera(45.0f, 4.0f / 3.0f, 0.1f, 100.0f) {}
+
+Renderer::~Renderer() = default;
+
+void Renderer::SetCamera(const Camera& camera) {
+	_camera = camera;
 }
 
-void Renderer::Clear()
-{
+Camera& Renderer::GetCamera() {
+	return _camera;
+}
+
+void Renderer::Clear() {
 	glClear(GL_COLOR_BUFFER_BIT);
 }
 
-void Renderer::SetCamera(glm::mat4 view, glm::mat4 proj)
-{
-	_camera.SetViewMatrix(view);
-	_camera.SetProjectionMatrix(proj);
+void Renderer::Draw(const Model& model) {
+	_camera.UploadToShader(model.GetShader());
+	model.Draw();
 }

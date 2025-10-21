@@ -67,12 +67,14 @@ void Window::Run(Model& model)
 			// Set left camera and draw to left half
 			glm::mat4 leftView = _xrSupport.ConvertXrPoseToMat4(0);
 			glm::mat4 leftProj = _xrSupport.ConvertXrFovToProj(0, 0.1f, 100.0f);
-			_leftRenderer.SetCamera(leftView, leftProj);
+			_leftRenderer.GetCamera().SetViewMatrix(leftView);
+			_leftRenderer.GetCamera().SetProjectionMatrix(leftProj);
 
 			// Set right camera and draw to right half
 			glm::mat4 rightView = _xrSupport.ConvertXrPoseToMat4(1);
 			glm::mat4 rightProj = _xrSupport.ConvertXrFovToProj(1, 0.1f, 100.0f);
-			_rightRenderer.SetCamera(rightView, rightProj);
+			_rightRenderer.GetCamera().SetViewMatrix(rightView);
+			_rightRenderer.GetCamera().SetProjectionMatrix(rightProj);
 		}
 		
 

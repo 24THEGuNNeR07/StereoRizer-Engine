@@ -4,8 +4,26 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-class Camera
-{
+class Camera {
+public:
+	Camera(float fov, float aspectRatio, float nearPlane, float farPlane);
+	~Camera() = default;
+
+	// Position/orientation setters
+	void SetPosition(const glm::vec3& pos);
+	void SetFront(const glm::vec3& front);
+	void SetUp(const glm::vec3& up);
+
+	void SetViewMatrix(const glm::mat4& view);
+	void SetProjectionMatrix(const glm::mat4& proj);
+
+	// Matrix getters
+	const glm::mat4& GetViewMatrix() const noexcept;
+	const glm::mat4& GetProjectionMatrix() const noexcept;
+
+	// Shader uniform upload
+	void UploadToShader(const Shader& shader) const;
+
 private:
 	float _FOV;
 	float _AspectRatio;
@@ -19,11 +37,7 @@ private:
 	glm::mat4 _projectionMatrix;
 	glm::mat4 _viewMatrix;
 
-public:
-	Camera(float fov, float aspectRatio, float nearPlane, float farPlane);
-	~Camera() = default;
-	void SetShaderUnifroms(Shader& shader);
-	void SetViewMatrix(glm::mat4 view);
-	void SetProjectionMatrix(glm::mat4 proj);
+	// Matrix update
+	void UpdateViewMatrix();
+	void UpdateProjectionMatrix();
 };
-

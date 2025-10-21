@@ -227,14 +227,14 @@ glm::mat4 OpenXRSupport::ConvertXrFovToProj(int eyeIndex, float nearZ, float far
 	return proj;
 }
 
-bool OpenXRSupport::CopyFramebufferToSwapchainByBlit_ReadRect(GLuint srcFbo, 
-															  GLint srcX, 
-															  GLint srcY, 
-															  GLsizei srcW, 
-															  GLsizei srcH, 
-															  XrSwapchainData& swapchain, 
-															  uint32_t imageIndex, 
-															  GLuint dstFboReuse)
+bool OpenXRSupport::CopyFramebufferToSwapchain(GLuint srcFbo,
+											   GLint srcX, 
+											   GLint srcY, 
+											   GLsizei srcW, 
+											   GLsizei srcH, 
+											   XrSwapchainData& swapchain, 
+											   uint32_t imageIndex, 
+											   GLuint dstFboReuse)
 {
 	// Get the swapchain texture
 	GLuint dstTex = swapchain.images[imageIndex].image;
@@ -440,7 +440,7 @@ void OpenXRSupport::CopyFrameBuffer()
 		GLsizei srcH = srcHeight;
 
 		// Blit from window backbuffer (READ) to swapchain texture (DRAW)
-		bool ok = CopyFramebufferToSwapchainByBlit_ReadRect(
+		bool ok = CopyFramebufferToSwapchain(
 			srcFbo, srcX, srcY, srcW, srcH,
 			sc, imageIndex, xrDstFbo);
 

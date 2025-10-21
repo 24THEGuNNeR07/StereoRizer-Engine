@@ -14,10 +14,31 @@ Shader::~Shader()
 	glDeleteProgram(_rendererID);
 }
 
-void Shader::Bind()
+Shader::Shader(Shader&& other) noexcept
 {
-	if(!ReloadIfChanged())
-		glUseProgram(_rendererID);
+	_rendererID = other._rendererID;
+	_filePath = std::move(other._filePath);
+	_lastWriteTime = other._lastWriteTime;
+
+	other._rendererID = 0;
+}
+
+Shader& Shader::operator=(Shader&& other) noexcept
+{
+	if (this != &other) {
+		glDeleteProgram(_rendererID);
+		_rendererID = other._rendererID;
+		_filePath = std::move(other._filePath);
+		_lastWriteTime = other._lastWriteTime;
+
+		other._rendererID = 0;
+	}
+	return *this;
+}
+
+void Shader::Bind() const
+{
+	glUseProgram(_rendererID);
 }
 
 void Shader::Unbind() const
@@ -47,7 +68,7 @@ bool Shader::ReloadIfChanged()
 		return false;
 }
 
-unsigned int Shader::CompileShader(const std::string& source, unsigned int type)
+GLuint Shader::CompileShader(const std::string& source, GLenum type)
 {
 	unsigned int id = glCreateShader(type);
 	const char* src = source.c_str();
@@ -62,8 +83,8 @@ unsigned int Shader::CompileShader(const std::string& source, unsigned int type)
 		glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
 		char* message = new char[length]; // or use std::vector<char> for safety
 		glGetShaderInfoLog(id, length, nullptr, message);
-		std::cout << "Failed to compile " << (type == GL_VERTEX_SHADER ? "vertex" : "fragment") << " shader!" << std::endl;
-		std::cout << message << std::endl;
+		LOG_ERROR(std::string("Failed to compile ") + (type == GL_VERTEX_SHADER ? "vertex" : "fragment") + " shader!");
+		LOG_ERROR(message);
 	}
 
 	return id;

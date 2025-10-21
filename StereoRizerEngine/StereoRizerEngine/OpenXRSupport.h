@@ -42,7 +42,7 @@ public:
     glm::mat4 ConvertXrPoseToMat4(int eyeIndex);
     glm::mat4 ConvertXrFovToProj(int eyeIndex, float nearZ, float farZ);
 
-    bool CopyFramebufferToSwapchainByBlit_ReadRect(GLuint srcFbo,
+    bool CopyFramebufferToSwapchain(GLuint srcFbo,
         GLint srcX, GLint srcY, GLsizei srcW, GLsizei srcH,
         XrSwapchainData& swapchain, uint32_t imageIndex,
         GLuint dstFboReuse);
