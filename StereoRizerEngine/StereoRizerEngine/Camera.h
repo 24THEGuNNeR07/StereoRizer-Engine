@@ -22,7 +22,7 @@ public:
 	const glm::mat4& GetProjectionMatrix() const noexcept;
 
 	// Shader uniform upload
-	void UploadToShader(const Shader& shader) const;
+	void UploadToShader(std::shared_ptr<Shader> shader) const;
 
 private:
 	float _FOV;

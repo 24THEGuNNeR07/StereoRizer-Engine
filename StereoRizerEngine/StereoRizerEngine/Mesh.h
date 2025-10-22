@@ -3,7 +3,7 @@
 #include <glm/glm.hpp>
 #include <vector>
 #include <string>
-#include <cstddef> // offsetof
+#include <cstddef>
 #include <GL/glew.h>
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -13,7 +13,6 @@
 struct Vertex {
     glm::vec3 Position;
     glm::vec3 Normal;
-    // Optionally: glm::vec2 TexCoords; glm::vec3 Tangent; glm::vec3 Bitangent;
 };
 
 struct VertexAttribute {

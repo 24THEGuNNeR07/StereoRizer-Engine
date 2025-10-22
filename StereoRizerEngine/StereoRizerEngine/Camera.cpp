@@ -51,9 +51,9 @@ const glm::mat4& Camera::GetProjectionMatrix() const noexcept {
 	return _projectionMatrix;
 }
 
-void Camera::UploadToShader(const Shader& shader) const {
-	unsigned int projLoc = glGetUniformLocation(shader.GetID(), "projectionMatrix");
+void Camera::UploadToShader(std::shared_ptr<Shader> shader) const {
+	unsigned int projLoc = glGetUniformLocation(shader->GetID(), "projectionMatrix");
 	glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(_projectionMatrix));
-	unsigned int viewLoc = glGetUniformLocation(shader.GetID(), "viewMatrix");
+	unsigned int viewLoc = glGetUniformLocation(shader->GetID(), "viewMatrix");
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(_viewMatrix));
 }

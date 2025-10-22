@@ -8,14 +8,14 @@
 
 class Model {
 public:
-	Model(Mesh mesh, Shader shader);
+	Model(std::shared_ptr<Mesh> mesh, std::shared_ptr<Shader> shader);
 	~Model();
 
 	Model(Model&& other) noexcept;
 	Model& operator=(Model&& other) noexcept;
 
-	const Mesh& GetMesh() const noexcept { return _mesh; }
-	const Shader& GetShader() const noexcept { return _shader; }
+	std::shared_ptr<Mesh> GetMesh() const noexcept { return _mesh; }
+	std::shared_ptr<Shader> GetShader() const noexcept { return _shader; }
 	void Draw() const;
 
 	// Transformations
@@ -24,7 +24,7 @@ public:
 	void Scale(const glm::vec3& scale);
 
 private:
-	Mesh _mesh;
-	Shader _shader;
+	std::shared_ptr<Mesh> _mesh;
+	std::shared_ptr<Shader> _shader;
 	glm::mat4 _transform = glm::mat4(1.0f);
 };

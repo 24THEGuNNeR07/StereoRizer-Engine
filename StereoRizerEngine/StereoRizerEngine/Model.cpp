@@ -1,6 +1,6 @@
 #include "Model.h"
 
-Model::Model(Mesh mesh, Shader shader)
+Model::Model(std::shared_ptr<Mesh> mesh, std::shared_ptr<Shader> shader)
 	: _mesh(std::move(mesh)), _shader(std::move(shader))
 {
 	_transform = glm::mat4(1.0f);
@@ -23,10 +23,10 @@ Model& Model::operator=(Model&& other) noexcept
 
 void Model::Draw() const
 {
-	_shader.Bind();
-	GLint modelLoc = glGetUniformLocation(_shader.GetID(), "modelMatrix");
+	_shader->Bind();
+	GLint modelLoc = glGetUniformLocation(_shader->GetID(), "modelMatrix");
 	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(_transform));
-	_mesh.Draw();
+	_mesh->Draw();
 }
 
 // --- Transformations ---

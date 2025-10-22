@@ -18,6 +18,14 @@
 #include "Renderer.h"
 #include "GfxAPIUtils.h"
 #include "OpenXRSupport.h"
+#include <vector>
+#include <algorithm>
+#include <memory>
+#include <functional>
+#include <vector>
+#include <algorithm>
+
+class Model;
 
 class Window
 {
@@ -28,7 +36,11 @@ public:
 	void Destroy();
 	void PollEvents();
 	void SwapBuffers();
-	void Run(Model& model);
+	void Run();
+
+	// Manage scene models owned by the application (Window stores non-owning pointers)
+	void AddModel(std::shared_ptr<Model> model);
+	void RemoveModel(std::shared_ptr<Model> model);
 
 	int GetWidth() const;
 	int GetHeight() const;
@@ -37,9 +49,15 @@ private:
 	int _width;
 	int _height;
 	const char* _title;
-	GLFWwindow* _window;
-	Renderer _leftRenderer;
-	Renderer _rightRenderer;
+	// GLFW windows must be destroyed with glfwDestroyWindow; use unique_ptr with custom deleter
+	// use std::function deleter so unique_ptr is default-constructible
+	std::unique_ptr<GLFWwindow, std::function<void(GLFWwindow*)>> _window;
+	std::unique_ptr<Renderer> _leftRenderer;
+	std::unique_ptr<Renderer> _rightRenderer;
+	std::vector<std::shared_ptr<Model>> _models;
+	void UpdateXRViews();
+	void RenderModelsLeft();
+	void RenderModelsRight();
 	void Create();
 	bool _xrInitialized = false;
 

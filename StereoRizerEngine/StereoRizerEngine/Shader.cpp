@@ -1,4 +1,5 @@
 #include "Shader.h"
+#include "Common.h"
 
 Shader::Shader(const std::string& filepath)
 {
@@ -51,7 +52,7 @@ bool Shader::ReloadIfChanged()
 	fs::file_time_type currentWriteTime = GetLastWriteTime();
 	if (currentWriteTime != _lastWriteTime) {
 		_lastWriteTime = currentWriteTime;
-		std::cout << "Reloading shader...\n";
+	LOG_INFO("Reloading shader...");
 
 		ShaderProgramSource newSource = ParseShader(_filePath);
 		unsigned int newShader = CreateShader(newSource.VertexSource, newSource.FragmentSource);
@@ -81,10 +82,10 @@ GLuint Shader::CompileShader(const std::string& source, GLenum type)
 	{
 		int length;
 		glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
-		char* message = new char[length]; // or use std::vector<char> for safety
-		glGetShaderInfoLog(id, length, nullptr, message);
-		LOG_ERROR(std::string("Failed to compile ") + (type == GL_VERTEX_SHADER ? "vertex" : "fragment") + " shader!");
-		LOG_ERROR(message);
+	std::vector<char> message(length);
+	glGetShaderInfoLog(id, length, nullptr, message.data());
+	LOG_ERROR(std::string("Failed to compile ") + (type == GL_VERTEX_SHADER ? "vertex" : "fragment") + " shader!");
+	LOG_ERROR(std::string(message.data()));
 	}
 
 	return id;
@@ -143,7 +144,7 @@ fs::file_time_type Shader::GetLastWriteTime()
 		return fs::last_write_time(_filePath);
 	}
 	catch (fs::filesystem_error& e) {
-		std::cerr << "Error getting last write time for shader file: " << e.what() << std::endl;
+		LOG_ERROR(std::string("Error getting last write time for shader file: ") + e.what());
 		return fs::file_time_type::min();
 	}
 }

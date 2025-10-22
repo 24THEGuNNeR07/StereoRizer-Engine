@@ -1,4 +1,5 @@
 ﻿#include "OpenXRSupport.h"
+#include "Common.h"
 
 OpenXRSupport::OpenXRSupport()
 {
@@ -27,13 +28,13 @@ bool OpenXRSupport::Init(GraphicsAPI_Type apiType)
 	std::vector<XrApiLayerProperties> apiLayerProperties;
 	result = xrEnumerateApiLayerProperties(0, &apiLayerCount, nullptr);
 	if (result != XR_SUCCESS) {
-		std::cerr << "Failed to enumerate API layer properties." << std::endl;
+		LOG_ERROR("Failed to enumerate API layer properties.");
 		return false;
 	}
 	apiLayerProperties.resize(apiLayerCount, { XR_TYPE_API_LAYER_PROPERTIES });
 	result = xrEnumerateApiLayerProperties(apiLayerCount, &apiLayerCount, apiLayerProperties.data());
 	if (result != XR_SUCCESS) {
-		std::cerr << "Failed to enumerate API layer properties." << std::endl;
+		LOG_ERROR("Failed to enumerate API layer properties.");
 		return false;
 	}
 
@@ -75,7 +76,7 @@ bool OpenXRSupport::Init(GraphicsAPI_Type apiType)
 			}
 		}
 		if (!found) {
-			std::cerr << "Failed to find OpenXR instance extension: " << requestedInstanceExtension << std::endl;
+			LOG_ERROR(std::string("Failed to find OpenXR instance extension: ") + requestedInstanceExtension);
 		}
 	}
 
@@ -89,12 +90,12 @@ bool OpenXRSupport::Init(GraphicsAPI_Type apiType)
 	result = xrCreateInstance(&instanceCI, &xrInstance);
 
 	if (result != XR_SUCCESS) {
-		std::cerr << "Failed to create XR instance." << std::endl;
-		std::cerr << "Error code: " << result << std::endl;
+		LOG_ERROR("Failed to create XR instance.");
+		LOG_ERROR(std::string("Error code: ") + std::to_string((int)result));
 		return false;
 	}
 	else {
-		std::cout << "XR Instance created successfully." << std::endl;
+		LOG_INFO("XR Instance created successfully.");
 	}
 
 	// Get system ID (headset)
@@ -102,7 +103,7 @@ bool OpenXRSupport::Init(GraphicsAPI_Type apiType)
 	systemInfo.formFactor = XR_FORM_FACTOR_HEAD_MOUNTED_DISPLAY;
 	result = xrGetSystem(xrInstance, &systemInfo, &xrSystemId);
 	if (XR_FAILED(result)) {
-		std::cerr << "Failed to get OpenXR system\n";
+		LOG_ERROR("Failed to get OpenXR system");
 		return false;
 	}
 
@@ -118,7 +119,7 @@ bool OpenXRSupport::Init(GraphicsAPI_Type apiType)
 	XrGraphicsRequirementsOpenGLKHR graphicsRequirements{ XR_TYPE_GRAPHICS_REQUIREMENTS_OPENGL_KHR };
 	result = pfnGetOpenGLGraphicsRequirementsKHR(xrInstance, xrSystemId, &graphicsRequirements);
 	if (XR_FAILED(result)) {
-		std::cerr << "Failed to get OpenGL graphics requirements\n";
+		LOG_ERROR("Failed to get OpenGL graphics requirements");
 		return false;
 	}
 
@@ -136,7 +137,7 @@ bool OpenXRSupport::Init(GraphicsAPI_Type apiType)
 
 	result = xrCreateSession(xrInstance, &sessionCreateInfo, &xrSession);
 	if (XR_FAILED(result)) {
-		std::cerr << "Failed to create OpenXR session\n";
+		LOG_ERROR("Failed to create OpenXR session");
 		return false;
 	}
 
@@ -146,7 +147,7 @@ bool OpenXRSupport::Init(GraphicsAPI_Type apiType)
 
 	result = xrCreateReferenceSpace(xrSession, &spaceInfo, &xrAppSpace);
 	if (XR_FAILED(result)) {
-		std::cerr << "Failed to create reference space\n";
+		LOG_ERROR("Failed to create reference space");
 		return false;
 	}
 
@@ -168,14 +169,14 @@ void OpenXRSupport::PollEvents()
 				XrSessionBeginInfo beginInfo{ XR_TYPE_SESSION_BEGIN_INFO };
 				beginInfo.primaryViewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
 				xrBeginSession(xrSession, &beginInfo);
-				std::cout << "XR session started!" << std::endl;
+				LOG_INFO("XR session started!");
 			}
 			else if (currentState == XR_SESSION_STATE_STOPPING) {
 				xrEndSession(xrSession);
-				std::cout << "XR session stopping." << std::endl;
+				LOG_INFO("XR session stopping.");
 			}
 			else if (currentState == XR_SESSION_STATE_EXITING || currentState == XR_SESSION_STATE_LOSS_PENDING) {
-				std::cout << "XR session exiting or lost." << std::endl;
+				LOG_INFO("XR session exiting or lost.");
 			}
 			break;
 		}
@@ -239,7 +240,7 @@ bool OpenXRSupport::CopyFramebufferToSwapchain(GLuint srcFbo,
 	// Get the swapchain texture
 	GLuint dstTex = swapchain.images[imageIndex].image;
 	if (dstTex == 0) {
-		std::cerr << "Swapchain image is invalid\n";
+		LOG_ERROR("Swapchain image is invalid");
 		return false;
 	}
 	// Create a temporary FBO on the correct context
@@ -249,7 +250,7 @@ bool OpenXRSupport::CopyFramebufferToSwapchain(GLuint srcFbo,
 	glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, dstTex, 0);
 
 	if (glCheckFramebufferStatus(GL_DRAW_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-		std::cerr << "Swapchain FBO incomplete\n";
+		LOG_ERROR("Swapchain FBO incomplete");
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 		glDeleteFramebuffers(1, &dstFbo);
 		return false;
@@ -296,7 +297,7 @@ void OpenXRSupport::WaitFrame()
 	
 	res = xrWaitFrame(xrSession, nullptr, &frameState);
 	if (XR_FAILED(res)) {
-		std::cerr << "xrWaitFrame failed: " << res << std::endl;
+		LOG_ERROR(std::string("xrWaitFrame failed: ") + std::to_string((int)res));
 	}
 }
 
@@ -305,7 +306,7 @@ void OpenXRSupport::BeginFrame()
 	XrResult res;
 	res = xrBeginFrame(xrSession, nullptr);
 	if (XR_FAILED(res)) {
-		std::cerr << "xrBeginFrame failed: " << res << std::endl;
+		LOG_ERROR(std::string("xrBeginFrame failed: ") + std::to_string((int)res));
 	}
 }
 
@@ -323,7 +324,7 @@ void OpenXRSupport::CreateXRSwapchains()
 		nullptr);
 
 	if (XR_FAILED(result)) {
-		std::cerr << "First xrEnumerateViewConfigurationViews failed: " << result << std::endl;
+		LOG_ERROR(std::string("First xrEnumerateViewConfigurationViews failed: ") + std::to_string((int)result));
 		return;
 	}
 
@@ -340,7 +341,7 @@ void OpenXRSupport::CreateXRSwapchains()
 		configViews.data());
 
 	if (XR_FAILED(result)) {
-		std::cerr << "Second xrEnumerateViewConfigurationViews failed: " << result << std::endl;
+		LOG_ERROR(std::string("Second xrEnumerateViewConfigurationViews failed: ") + std::to_string((int)result));
 		return;
 	}
 
@@ -371,7 +372,7 @@ void OpenXRSupport::CreateXRSwapchains()
 			reinterpret_cast<XrSwapchainImageBaseHeader*>(_swapchains[i].images.data()));
 	}
 
-	std::cout << "Swapchains created for both eyes." << std::endl;
+	LOG_INFO("Swapchains created for both eyes.");
 }
 
 void OpenXRSupport::LocateViews()
@@ -385,7 +386,7 @@ void OpenXRSupport::LocateViews()
 	uint32_t viewCountOutput = 0;
 	res = xrLocateViews(xrSession, &locateInfo, &viewState, 2, &viewCountOutput, views);
 	if (XR_FAILED(res) || viewCountOutput < 2) {
-		std::cerr << "xrLocateViews failed or returned <2 views: " << res << ", count=" << viewCountOutput << std::endl;
+		LOG_ERROR(std::string("xrLocateViews failed or returned <2 views: ") + std::to_string((int)res) + ", count=" + std::to_string((int)viewCountOutput));
 	}
 }
 
@@ -407,7 +408,7 @@ void OpenXRSupport::CopyFrameBuffer()
 	{
 		XrSwapchainData& sc = _swapchains[eye];
 		if (sc.handle == XR_NULL_HANDLE || sc.images.empty()) {
-			std::cerr << "Swapchain for eye " << eye << " invalid\n";
+			LOG_ERROR(std::string("Swapchain for eye ") + std::to_string((int)eye) + " invalid");
 			continue;
 		}
 
@@ -416,7 +417,7 @@ void OpenXRSupport::CopyFrameBuffer()
 		XrSwapchainImageAcquireInfo acquireInfo{ XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO };
 		res = xrAcquireSwapchainImage(sc.handle, &acquireInfo, &imageIndex);
 		if (XR_FAILED(res)) {
-			std::cerr << "xrAcquireSwapchainImage failed for eye " << eye << ": " << res << std::endl;
+			LOG_ERROR(std::string("xrAcquireSwapchainImage failed for eye ") + std::to_string((int)eye) + ": " + std::to_string((int)res));
 			continue;
 		}
 
@@ -425,7 +426,7 @@ void OpenXRSupport::CopyFrameBuffer()
 		waitInfo.timeout = XR_INFINITE_DURATION;
 		res = xrWaitSwapchainImage(sc.handle, &waitInfo);
 		if (XR_FAILED(res)) {
-			std::cerr << "xrWaitSwapchainImage failed for eye " << eye << ": " << res << std::endl;
+			LOG_ERROR(std::string("xrWaitSwapchainImage failed for eye ") + std::to_string((int)eye) + ": " + std::to_string((int)res));
 			// best effort release
 			XrSwapchainImageReleaseInfo releaseInfo{ XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO };
 			xrReleaseSwapchainImage(sc.handle, &releaseInfo);
@@ -445,7 +446,7 @@ void OpenXRSupport::CopyFrameBuffer()
 			sc, imageIndex, xrDstFbo);
 
 		if (!ok) {
-			std::cerr << "CopyFramebufferToSwapchainByBlit failed for eye " << eye << std::endl;
+			LOG_ERROR(std::string("CopyFramebufferToSwapchainByBlit failed for eye ") + std::to_string((int)eye));
 			// fallback: you could render a fullscreen quad into swapchain texture using src as texture
 		}
 
@@ -453,7 +454,7 @@ void OpenXRSupport::CopyFrameBuffer()
 		XrSwapchainImageReleaseInfo releaseInfo{ XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO };
 		res = xrReleaseSwapchainImage(sc.handle, &releaseInfo);
 		if (XR_FAILED(res)) {
-			std::cerr << "xrReleaseSwapchainImage failed for eye " << eye << ": " << res << std::endl;
+			LOG_ERROR(std::string("xrReleaseSwapchainImage failed for eye ") + std::to_string((int)eye) + ": " + std::to_string((int)res));
 		}
 
 		// Fill composition layer view
@@ -482,7 +483,7 @@ void OpenXRSupport::CopyFrameBuffer()
 
 	res = xrEndFrame(xrSession, &endInfo);
 	if (XR_FAILED(res)) {
-		std::cerr << "xrEndFrame failed: " << res << std::endl;
+		LOG_ERROR(std::string("xrEndFrame failed: ") + std::to_string((int)res));
 	}
 }
 

@@ -1,21 +1,23 @@
 #pragma once
 
+#include <memory>
+
 #include "Shader.h"
 #include "Mesh.h"
 #include "Model.h"
 #include "Camera.h"
+
 
 class Renderer {
 public:
 	Renderer();
 	~Renderer();
 
-	void SetCamera(const Camera& camera); // Accepts external camera
-	Camera& GetCamera();                  // Access internal camera
+	std::shared_ptr<Camera> GetCamera();
 
 	void Clear();
-	void Draw(const Model& model);
+	void Draw(std::shared_ptr<Model> model);
 
 private:
-	Camera _camera;
+	std::shared_ptr<Camera> _camera;
 };
