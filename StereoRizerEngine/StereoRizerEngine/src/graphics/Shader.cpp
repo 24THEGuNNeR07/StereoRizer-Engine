@@ -1,6 +1,8 @@
 #include "graphics/Shader.h"
 #include "core/Common.h"
 
+using namespace stereorizer::graphics;
+
 Shader::Shader(const std::string& filepath)
 {
 	_filePath = filepath;

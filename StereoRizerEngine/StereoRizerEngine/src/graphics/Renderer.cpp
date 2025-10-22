@@ -3,6 +3,8 @@
 #include "graphics/Camera.h"
 #include "graphics/Model.h"
 
+using namespace stereorizer::graphics;
+
 Renderer::Renderer()
 	: _camera(std::make_shared<Camera>(45.0f, 4.0f / 3.0f, 0.1f, 100.0f)) {}
 

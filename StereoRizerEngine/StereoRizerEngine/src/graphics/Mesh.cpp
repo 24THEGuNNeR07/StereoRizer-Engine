@@ -1,6 +1,8 @@
 #include "graphics/Mesh.h"
 #include "core/Common.h"
 
+using namespace stereorizer::graphics;
+
 Mesh::Mesh(const std::string& path)
 {
 	_path = path;

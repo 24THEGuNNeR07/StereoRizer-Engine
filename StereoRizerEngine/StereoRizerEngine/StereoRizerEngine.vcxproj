@@ -147,7 +147,6 @@ copy /Y "..\external\assimp\bin\Debug\assimp-vc143-mtd.dll" "$(TargetDir)"</Comm
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\graphics\Camera.cpp" />
-    <ClCompile Include="src\graphics\Cube.cpp" />
     <ClCompile Include="src\core\Main.cpp" />
     <ClCompile Include="src\graphics\Mesh.cpp" />
     <ClCompile Include="src\graphics\Model.cpp" />
@@ -159,7 +158,6 @@ copy /Y "..\external\assimp\bin\Debug\assimp-vc143-mtd.dll" "$(TargetDir)"</Comm
   <ItemGroup>
     <ClInclude Include="include\graphics\Camera.h" />
     <ClInclude Include="include\core\Common.h" />
-    <ClInclude Include="include\graphics\Cube.h" />
     <ClInclude Include="include\graphics\GfxAPIUtils.h" />
     <ClInclude Include="include\graphics\Mesh.h" />
     <ClInclude Include="include\graphics\Model.h" />

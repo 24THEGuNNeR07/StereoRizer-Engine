@@ -25,43 +25,43 @@
 #include <vector>
 #include <algorithm>
 
-class Model;
+namespace stereorizer::core
+{ 
+	class Window
+	{
+	public:
+		Window(int width, int height, const char* title);
+		~Window();
 
-class Window
-{
-public:
-	Window(int width, int height, const char* title);
-	~Window();
+		void Destroy();
+		void PollEvents();
+		void SwapBuffers();
+		void Run();
 
-	void Destroy();
-	void PollEvents();
-	void SwapBuffers();
-	void Run();
+		// Manage scene models owned by the application (Window stores non-owning pointers)
+		void AddModel(std::shared_ptr<stereorizer::graphics::Model> model);
+		void RemoveModel(std::shared_ptr<stereorizer::graphics::Model> model);
 
-	// Manage scene models owned by the application (Window stores non-owning pointers)
-	void AddModel(std::shared_ptr<Model> model);
-	void RemoveModel(std::shared_ptr<Model> model);
+		int GetWidth() const;
+		int GetHeight() const;
 
-	int GetWidth() const;
-	int GetHeight() const;
+	private:
+		int _width;
+		int _height;
+		const char* _title;
+		// GLFW windows must be destroyed with glfwDestroyWindow; use unique_ptr with custom deleter
+		// use std::function deleter so unique_ptr is default-constructible
+		std::unique_ptr<GLFWwindow, std::function<void(GLFWwindow*)>> _window;
+		std::unique_ptr<stereorizer::graphics::Renderer> _leftRenderer;
+		std::unique_ptr<stereorizer::graphics::Renderer> _rightRenderer;
+		std::vector<std::shared_ptr<stereorizer::graphics::Model>> _models;
+		void UpdateXRViews();
+		void RenderModelsLeft();
+		void RenderModelsRight();
+		void Create();
+		bool _xrInitialized = false;
 
-private:
-	int _width;
-	int _height;
-	const char* _title;
-	// GLFW windows must be destroyed with glfwDestroyWindow; use unique_ptr with custom deleter
-	// use std::function deleter so unique_ptr is default-constructible
-	std::unique_ptr<GLFWwindow, std::function<void(GLFWwindow*)>> _window;
-	std::unique_ptr<Renderer> _leftRenderer;
-	std::unique_ptr<Renderer> _rightRenderer;
-	std::vector<std::shared_ptr<Model>> _models;
-	void UpdateXRViews();
-	void RenderModelsLeft();
-	void RenderModelsRight();
-	void Create();
-	bool _xrInitialized = false;
-
-	OpenXRSupport _xrSupport;
-	GraphicsAPI_Type m_apiType = GraphicsAPI_Type::OpenGL;
-};
-
+		stereorizer::xr::OpenXRSupport _xrSupport;
+		GraphicsAPI_Type m_apiType = GraphicsAPI_Type::OpenGL;
+	};
+}

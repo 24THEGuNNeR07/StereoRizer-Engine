@@ -7,17 +7,19 @@
 #include "Model.h"
 #include "Camera.h"
 
+namespace stereorizer::graphics
+{
+	class Renderer {
+	public:
+		Renderer();
+		~Renderer();
 
-class Renderer {
-public:
-	Renderer();
-	~Renderer();
+		std::shared_ptr<Camera> GetCamera();
 
-	std::shared_ptr<Camera> GetCamera();
+		void Clear();
+		void Draw(std::shared_ptr<Model> model);
 
-	void Clear();
-	void Draw(std::shared_ptr<Model> model);
-
-private:
-	std::shared_ptr<Camera> _camera;
-};
+	private:
+		std::shared_ptr<Camera> _camera;
+	};
+}

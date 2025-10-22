@@ -2,6 +2,8 @@
 #include "graphics/Mesh.h"
 #include "graphics/Shader.h"
 
+using namespace stereorizer::graphics;
+
 Model::Model(std::shared_ptr<Mesh> mesh, std::shared_ptr<Shader> shader)
 	: _mesh(std::move(mesh)), _shader(std::move(shader))
 {

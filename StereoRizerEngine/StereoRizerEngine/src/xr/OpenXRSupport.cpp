@@ -1,6 +1,8 @@
 ﻿#include "xr/OpenXRSupport.h"
 #include "core/Common.h"
 
+using namespace stereorizer::xr;
+
 OpenXRSupport::OpenXRSupport()
 {
 }

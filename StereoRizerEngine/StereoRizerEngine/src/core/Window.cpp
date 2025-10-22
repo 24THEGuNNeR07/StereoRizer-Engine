@@ -5,6 +5,9 @@
 #include "graphics/Renderer.h"
 #include "xr/OpenXRSupport.h"
 
+using namespace stereorizer::core;
+using namespace stereorizer::graphics;
+
 Window::Window(int width, int height, const char* title)
 {
 	_width = width;

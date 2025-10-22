@@ -60,9 +60,6 @@
     <ClCompile Include="src\graphics\Camera.cpp">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="src\graphics\Cube.cpp">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
     <ClCompile Include="src\xr\OpenXRSupport.cpp">
       <Filter>Source Files\XR</Filter>
     </ClCompile>
@@ -87,9 +84,6 @@
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="include\graphics\Camera.h">
-      <Filter>Header Files\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="include\graphics\Cube.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="include\graphics\GfxAPIUtils.h">

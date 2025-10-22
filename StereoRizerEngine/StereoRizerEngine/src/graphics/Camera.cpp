@@ -2,6 +2,7 @@
 #include "graphics/Shader.h"
 #include <glm/gtc/matrix_transform.hpp>
 
+using namespace stereorizer::graphics;
 
 Camera::Camera(float fov, float aspectRatio, float nearPlane, float farPlane)
 	: _FOV(fov), _AspectRatio(aspectRatio), _NearPlane(nearPlane), _FarPlane(farPlane)
