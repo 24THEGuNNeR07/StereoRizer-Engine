@@ -1,5 +1,5 @@
-#include "Shader.h"
-#include "Common.h"
+#include "graphics/Shader.h"
+#include "core/Common.h"
 
 Shader::Shader(const std::string& filepath)
 {

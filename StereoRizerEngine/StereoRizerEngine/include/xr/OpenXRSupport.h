@@ -17,7 +17,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-#include "GfxAPIUtils.h"
+#include "graphics/GfxAPIUtils.h"
 
 struct XrSwapchainData {
     XrSwapchain handle = XR_NULL_HANDLE;

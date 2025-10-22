@@ -1,5 +1,5 @@
-﻿#include "OpenXRSupport.h"
-#include "Common.h"
+﻿#include "xr/OpenXRSupport.h"
+#include "core/Common.h"
 
 OpenXRSupport::OpenXRSupport()
 {

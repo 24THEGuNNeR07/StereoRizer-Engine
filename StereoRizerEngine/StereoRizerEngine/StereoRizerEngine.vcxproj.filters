@@ -19,74 +19,92 @@
     <Filter Include="Resource Files\Models">
       <UniqueIdentifier>{68b61a05-869b-4763-a6c6-9fc89a1056ac}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Core">
+      <UniqueIdentifier>{f23e4f6d-7ac2-4d3a-b1cc-08d63f52935b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Graphics">
+      <UniqueIdentifier>{a8b7c3d2-6e91-4f2a-9d5c-0f2e8d3a4b5c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\XR">
+      <UniqueIdentifier>{b9c8e5f4-7d23-4a1b-8e6c-1f3e9d2c5a4d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Core">
+      <UniqueIdentifier>{e4f5d6c7-8b9a-4c2b-90d8-2e1f3a4b5c6d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Graphics">
+      <UniqueIdentifier>{d5e6f7g8-9h0i-4j2k-8l3m-4n5o6p7q8r9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\XR">
+      <UniqueIdentifier>{s1t2u3v4-5w6x-7y8z-9a0b-1c2d3e4f5g6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Main.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="src\core\Main.cpp">
+      <Filter>Source Files\Core</Filter>
     </ClCompile>
-    <ClCompile Include="Window.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="src\core\Window.cpp">
+      <Filter>Source Files\Core</Filter>
     </ClCompile>
-    <ClCompile Include="Shader.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="src\graphics\Shader.cpp">
+      <Filter>Source Files\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="Renderer.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="src\graphics\Renderer.cpp">
+      <Filter>Source Files\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="Mesh.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="src\graphics\Mesh.cpp">
+      <Filter>Source Files\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="Model.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="src\graphics\Model.cpp">
+      <Filter>Source Files\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="Camera.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="src\graphics\Camera.cpp">
+      <Filter>Source Files\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="Cube.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="src\graphics\Cube.cpp">
+      <Filter>Source Files\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="OpenXRSupport.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="src\xr\OpenXRSupport.cpp">
+      <Filter>Source Files\XR</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Window.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="include\core\Window.h">
+      <Filter>Header Files\Core</Filter>
     </ClInclude>
-    <ClInclude Include="Shader.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="include\core\Common.h">
+      <Filter>Header Files\Core</Filter>
     </ClInclude>
-    <ClInclude Include="Renderer.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="include\graphics\Shader.h">
+      <Filter>Header Files\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="Mesh.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="include\graphics\Renderer.h">
+      <Filter>Header Files\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="Model.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="include\graphics\Mesh.h">
+      <Filter>Header Files\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="Camera.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="include\graphics\Model.h">
+      <Filter>Header Files\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="Cube.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="include\graphics\Camera.h">
+      <Filter>Header Files\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="GfxAPIUtils.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="include\graphics\Cube.h">
+      <Filter>Header Files\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="OpenXRSupport.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="include\graphics\GfxAPIUtils.h">
+      <Filter>Header Files\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="Common.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="include\xr\OpenXRSupport.h">
+      <Filter>Header Files\XR</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="Flat.shader">
+    <None Include="resources\shaders\Flat.shader">
       <Filter>Resource Files\Shaders</Filter>
     </None>
-    <None Include="Phong.shader">
+    <None Include="resources\shaders\Phong.shader">
       <Filter>Resource Files\Shaders</Filter>
     </None>
   </ItemGroup>

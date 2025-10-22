@@ -1,7 +1,9 @@
-﻿#include "Window.h"
-#include "Shader.h"
-#include "Model.h"
-#include "Common.h"
+﻿#include "core/Window.h"
+#include "graphics/Shader.h"
+#include "graphics/Model.h"
+#include "core/Common.h"
+#include "graphics/Renderer.h"
+#include "xr/OpenXRSupport.h"
 
 Window::Window(int width, int height, const char* title)
 {

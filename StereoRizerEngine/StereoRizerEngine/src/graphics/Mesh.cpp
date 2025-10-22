@@ -1,5 +1,5 @@
-#include "Mesh.h"
-#include "Common.h"
+#include "graphics/Mesh.h"
+#include "core/Common.h"
 
 Mesh::Mesh(const std::string& path)
 {

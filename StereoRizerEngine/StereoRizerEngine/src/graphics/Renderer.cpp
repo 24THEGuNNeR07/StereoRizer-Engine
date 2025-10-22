@@ -1,5 +1,7 @@
 
-#include "Renderer.h"
+#include "graphics/Renderer.h"
+#include "graphics/Camera.h"
+#include "graphics/Model.h"
 
 Renderer::Renderer()
 	: _camera(std::make_shared<Camera>(45.0f, 4.0f / 3.0f, 0.1f, 100.0f)) {}

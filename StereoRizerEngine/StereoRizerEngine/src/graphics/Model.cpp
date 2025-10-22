@@ -1,4 +1,6 @@
-#include "Model.h"
+#include "graphics/Model.h"
+#include "graphics/Mesh.h"
+#include "graphics/Shader.h"
 
 Model::Model(std::shared_ptr<Mesh> mesh, std::shared_ptr<Shader> shader)
 	: _mesh(std::move(mesh)), _shader(std::move(shader))

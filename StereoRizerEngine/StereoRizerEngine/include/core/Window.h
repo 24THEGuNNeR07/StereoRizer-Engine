@@ -15,9 +15,9 @@
 #include "openxr/openxr.h"
 #include "openxr/openxr_platform.h"
 
-#include "Renderer.h"
-#include "GfxAPIUtils.h"
-#include "OpenXRSupport.h"
+#include "graphics/Renderer.h"
+#include "graphics/GfxAPIUtils.h"
+#include "xr/OpenXRSupport.h"
 #include <vector>
 #include <algorithm>
 #include <memory>

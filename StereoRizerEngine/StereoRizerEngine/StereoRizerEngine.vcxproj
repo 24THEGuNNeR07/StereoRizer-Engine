@@ -105,7 +105,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>..\external\glfw\include;..\external\glew\include;..\external\assimp\include;..\external\glm\include;..\external\openxr\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>include;..\external\glfw\include;..\external\glew\include;..\external\assimp\include;..\external\glm\include;..\external\openxr\include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
@@ -128,7 +128,7 @@ copy /Y "..\external\assimp\bin\Debug\assimp-vc143-mtd.dll" "$(TargetDir)"</Comm
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>..\external\glfw\include;..\external\glew\include;..\external\assimp\include;..\external\glm\include;..\external\openxr\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>include;..\external\glfw\include;..\external\glew\include;..\external\assimp\include;..\external\glm\include;..\external\openxr\include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
@@ -146,32 +146,32 @@ copy /Y "..\external\assimp\bin\Debug\assimp-vc143-mtd.dll" "$(TargetDir)"</Comm
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Camera.cpp" />
-    <ClCompile Include="Cube.cpp" />
-    <ClCompile Include="Main.cpp" />
-    <ClCompile Include="Mesh.cpp" />
-    <ClCompile Include="Model.cpp" />
-    <ClCompile Include="OpenXRSupport.cpp" />
-    <ClCompile Include="Renderer.cpp" />
-    <ClCompile Include="Shader.cpp" />
-    <ClCompile Include="Window.cpp" />
+    <ClCompile Include="src\graphics\Camera.cpp" />
+    <ClCompile Include="src\graphics\Cube.cpp" />
+    <ClCompile Include="src\core\Main.cpp" />
+    <ClCompile Include="src\graphics\Mesh.cpp" />
+    <ClCompile Include="src\graphics\Model.cpp" />
+    <ClCompile Include="src\xr\OpenXRSupport.cpp" />
+    <ClCompile Include="src\graphics\Renderer.cpp" />
+    <ClCompile Include="src\graphics\Shader.cpp" />
+    <ClCompile Include="src\core\Window.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Camera.h" />
-    <ClInclude Include="Common.h" />
-    <ClInclude Include="Cube.h" />
-    <ClInclude Include="GfxAPIUtils.h" />
-    <ClInclude Include="Mesh.h" />
-    <ClInclude Include="Model.h" />
-    <ClInclude Include="OpenXRSupport.h" />
-    <ClInclude Include="Renderer.h" />
-    <ClInclude Include="Shader.h" />
-    <ClInclude Include="Window.h" />
+    <ClInclude Include="include\graphics\Camera.h" />
+    <ClInclude Include="include\core\Common.h" />
+    <ClInclude Include="include\graphics\Cube.h" />
+    <ClInclude Include="include\graphics\GfxAPIUtils.h" />
+    <ClInclude Include="include\graphics\Mesh.h" />
+    <ClInclude Include="include\graphics\Model.h" />
+    <ClInclude Include="include\xr\OpenXRSupport.h" />
+    <ClInclude Include="include\graphics\Renderer.h" />
+    <ClInclude Include="include\graphics\Shader.h" />
+    <ClInclude Include="include\core\Window.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Flat.shader" />
+    <None Include="resources\shaders\Flat.shader" />
     <None Include="packages.config" />
-    <None Include="Phong.shader" />
+    <None Include="resources\shaders\Phong.shader" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

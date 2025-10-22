@@ -1,5 +1,7 @@
-#include "Window.h"
-#include "Shader.h"
+#include "core/Window.h"
+#include "graphics/Shader.h"
+#include "graphics/Model.h"
+#include "graphics/Mesh.h"
 
 #include <iostream>
 #include <memory>
@@ -9,7 +11,7 @@ int main()
     Window window(800, 600, "StereoRizer Engine");
 
 	std::shared_ptr<Mesh> mesh = std::make_shared<Mesh>("../models/Suzanne.obj");
-	std::shared_ptr<Shader> shader = std::make_shared<Shader>("Phong.shader");
+	std::shared_ptr<Shader> shader = std::make_shared<Shader>("resources/shaders/Phong.shader");
 
     auto model = std::make_shared<Model>(mesh, shader);
 
