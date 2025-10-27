@@ -1,4 +1,3 @@
-
 #include "graphics/Renderer.h"
 #include "graphics/Camera.h"
 #include "graphics/Model.h"
@@ -23,5 +22,6 @@ void Renderer::Clear() {
 void Renderer::Draw(std::shared_ptr<Model> model) {
 	if (_camera)
 		_camera->UploadToShader(model->GetShader());
+	model->GetShader()->ReloadIfChanged();
 	model->Draw();
 }
