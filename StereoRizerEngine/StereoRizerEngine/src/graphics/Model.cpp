@@ -32,12 +32,6 @@ void Model::Draw() const
 	GLint modelLoc = glGetUniformLocation(_shader->GetID(), "modelMatrix");
 	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(_transform));
 
-	glm::mat4 invModel = glm::inverse(_transform);
-	glm::mat4 transInvModel = glm::transpose(invModel);
-
-	GLint modelTIMLoc = glGetUniformLocation(_shader->GetID(), "modelTIMMatrix");
-	glUniformMatrix4fv(modelTIMLoc, 1, GL_FALSE, glm::value_ptr(transInvModel));
-
 	_mesh->Draw();
 }
 
