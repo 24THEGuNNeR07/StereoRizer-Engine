@@ -108,6 +108,8 @@ void Window::Run()
 	if (_xrInitialized)
 		_xrSupport.InitLoop(_width, _height);
 
+	glEnable(GL_DEPTH_TEST);
+
 	while (!glfwWindowShouldClose(_window.get()))
 	{
 		glfwMakeContextCurrent(_window.get()); // force same context before every frame
@@ -169,7 +171,11 @@ void Window::Create()
 	GLFWwindow* raw = glfwCreateWindow(_width, _height, _title, NULL, NULL);
 	_window.reset(raw);
 	glfwMakeContextCurrent(_window.get());
-	glewInit();
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+	{
+		std::cout << "Failed to initialize GLAD" << std::endl;
+		return;
+	}
 
 	// DEBUG: Check GPU
 	LOG_INFO(std::string("GL Renderer: ") + reinterpret_cast<const char*>(glGetString(GL_RENDERER)));
