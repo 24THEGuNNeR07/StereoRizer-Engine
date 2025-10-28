@@ -4,62 +4,117 @@
 using namespace stereorizer::graphics;
 using namespace stereorizer::core;
 
-Shader::Shader(const char *vtxPath, const char *fragPath)
+Shader::Shader(const std::string& filepath)
 	: textureCount(textureCount)
 {
-	// 1. read code from file
-	std::string vtxShaderCodeStr = FileUtils::readFile(vtxPath);
-	std::string fragShaderCodeStr = FileUtils::readFile(fragPath);
+	_filePath = filepath;
+	_lastWriteTime = GetLastWriteTime();
 
-	const char *vtxShaderCode = vtxShaderCodeStr.c_str();
-	const char *fragShaderCode = fragShaderCodeStr.c_str();
+	ShaderProgramSource source = ParseShader(filepath);
+	CreateShader(source.VertexSource, source.FragmentSource);
+}
 
-	// 2. compile shaders
+GLuint Shader::CompileShader(const std::string& source, GLenum type)
+{
+	unsigned int id = glCreateShader(type);
+	const char* src = source.c_str();
+	glShaderSource(id, 1, &src, nullptr);
+	glCompileShader(id);
 
-	uint32_t vtx, frag;
-	int32_t success;
-	char infoLog[512];
-
-	vtx = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vtx, 1, &vtxShaderCode, NULL);
-	glCompileShader(vtx);
-
-	glGetShaderiv(vtx, GL_COMPILE_STATUS, &success);
-
-	if(!success)
+	int result;
+	glGetShaderiv(id, GL_COMPILE_STATUS, &result);
+	if (result == GL_FALSE)
 	{
-		glGetShaderInfoLog(vtx, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
+		int length;
+		glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
+		std::vector<char> message(length);
+		glGetShaderInfoLog(id, length, nullptr, message.data());
+		LOG_ERROR(std::string("Failed to compile ") + (type == GL_VERTEX_SHADER ? "vertex" : "fragment") + " shader!");
+		LOG_ERROR(std::string(message.data()));
 	}
 
-	frag = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(frag, 1, &fragShaderCode, NULL);
-	glCompileShader(frag);
+	return id;
+}
 
-	glGetShaderiv(frag, GL_COMPILE_STATUS, &success);
+unsigned int Shader::CreateShader(const std::string& vertexShader, const std::string& fragmentShader)
+{
+	unsigned int program = glCreateProgram();
+	unsigned int vs = CompileShader(vertexShader, GL_VERTEX_SHADER);
+	unsigned int fs = CompileShader(fragmentShader, GL_FRAGMENT_SHADER);
 
-	if(!success)
-	{
-		glGetShaderInfoLog(frag, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
-	}
+	glAttachShader(program, vs);
+	glAttachShader(program, fs);
+	glLinkProgram(program);
+	glValidateProgram(program);
 
-	id = glCreateProgram();
-	glAttachShader(id, vtx);
-	glAttachShader(id, frag);
-	glLinkProgram(id);
+	glDeleteShader(vs);
+	glDeleteShader(fs);
 
-	glGetProgramiv(id, GL_LINK_STATUS, &success);
-
-	if(!success)
-	{
-		glGetProgramInfoLog(id, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::PROGRAM::LINK_FAILED\n" << infoLog << std::endl;
-	}
-
-	glDeleteShader(vtx);
-	glDeleteShader(frag);
 	use();
+	return program;
+}
+
+bool Shader::ReloadIfChanged()
+{
+	std::filesystem::file_time_type currentWriteTime = GetLastWriteTime();
+	if (currentWriteTime != _lastWriteTime) {
+		_lastWriteTime = currentWriteTime;
+		std::cout << "Reloading shader..." << std::endl;
+
+		ShaderProgramSource newSource = ParseShader(_filePath);
+		unsigned int newShader = CreateShader(newSource.VertexSource, newSource.FragmentSource);
+		if (newShader != 0) {
+			glDeleteProgram(id);
+			id = newShader;
+			glUseProgram(id);
+			return true;
+		}
+		else
+			return false;
+	}
+	else
+		return false;
+}
+
+std::filesystem::file_time_type Shader::GetLastWriteTime()
+{
+	try {
+		return std::filesystem::last_write_time(_filePath);
+	}
+	catch (std::filesystem::filesystem_error& e) {
+		std::cerr << std::string("Error getting last write time for shader file: ") << std::endl;
+		return std::filesystem::file_time_type::min();
+	}
+}
+
+ShaderProgramSource Shader::ParseShader(const std::string& filepath)
+{
+	std::ifstream stream(filepath);
+
+	enum class ShaderType {
+		NONE = -1,
+		VERTEX = 0,
+		FRAGMENT = 1
+	};
+
+	std::string line;
+	std::stringstream ss[2];
+	ShaderType type = ShaderType::NONE;
+	while (std::getline(stream, line))
+	{
+		if (line.find("#shader") != std::string::npos)
+		{
+			if (line.find("vertex") != std::string::npos)
+				type = ShaderType::VERTEX;
+			if (line.find("fragment") != std::string::npos)
+				type = ShaderType::FRAGMENT;
+		}
+		else {
+			ss[(int)type] << line << "\n";
+		}
+	}
+
+	return { ss[0].str(), ss[1].str() };
 }
 
 int32_t Shader::getUniformLocation(const std::string &name)
