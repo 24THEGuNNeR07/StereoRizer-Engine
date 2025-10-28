@@ -39,8 +39,8 @@ namespace stereorizer::core
 		void Run();
 
 		// Manage scene models owned by the application (Window stores non-owning pointers)
-		void AddModel(std::shared_ptr<stereorizer::graphics::Model> model);
-		void RemoveModel(std::shared_ptr<stereorizer::graphics::Model> model);
+		void AddModel(std::shared_ptr<stereorizer::graphics::AssimpModel> model);
+		void RemoveModel(std::shared_ptr<stereorizer::graphics::AssimpModel> model);
 
 		int GetWidth() const;
 		int GetHeight() const;
@@ -54,7 +54,7 @@ namespace stereorizer::core
 		std::unique_ptr<GLFWwindow, std::function<void(GLFWwindow*)>> _window;
 		std::unique_ptr<stereorizer::graphics::Renderer> _leftRenderer;
 		std::unique_ptr<stereorizer::graphics::Renderer> _rightRenderer;
-		std::vector<std::shared_ptr<stereorizer::graphics::Model>> _models;
+		std::vector<std::shared_ptr<stereorizer::graphics::AssimpModel>> _models;
 		void UpdateXRViews();
 		void RenderModelsLeft();
 		void RenderModelsRight();

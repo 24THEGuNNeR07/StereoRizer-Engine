@@ -1,6 +1,6 @@
 ﻿#include "core/Window.h"
 #include "graphics/Shader.h"
-#include "graphics/Model.h"
+#include "graphics/AssimpModel.h"
 #include "core/Common.h"
 #include "graphics/Renderer.h"
 #include "xr/OpenXRSupport.h"
@@ -45,14 +45,14 @@ void Window::SwapBuffers()
 	glfwSwapBuffers(_window.get());
 }
 
-void Window::AddModel(std::shared_ptr<Model> model)
+void Window::AddModel(std::shared_ptr<AssimpModel> model)
 {
 	if (!model) return;
 	if (std::find(_models.begin(), _models.end(), model) == _models.end())
 		_models.push_back(model);
 }
 
-void Window::RemoveModel(std::shared_ptr<Model> model)
+void Window::RemoveModel(std::shared_ptr<AssimpModel> model)
 {
 	if (!model) return;
 	auto it = std::find(_models.begin(), _models.end(), model);
@@ -73,14 +73,14 @@ void Window::UpdateXRViews()
 	// Update left camera
 	glm::mat4 leftView = _xrSupport.ConvertXrPoseToMat4(0);
 	glm::mat4 leftProj = _xrSupport.ConvertXrFovToProj(0, 0.1f, 100.0f);
-	_leftRenderer->GetCamera()->SetViewMatrix(leftView);
-	_leftRenderer->GetCamera()->SetProjectionMatrix(leftProj);
+	//_leftRenderer->GetCamera()->SetViewMatrix(leftView);
+	//_leftRenderer->GetCamera()->SetProjectionMatrix(leftProj);
 
 	// Update right camera
 	glm::mat4 rightView = _xrSupport.ConvertXrPoseToMat4(1);
 	glm::mat4 rightProj = _xrSupport.ConvertXrFovToProj(1, 0.1f, 100.0f);
-	_rightRenderer->GetCamera()->SetViewMatrix(rightView);
-	_rightRenderer->GetCamera()->SetProjectionMatrix(rightProj);
+	//_rightRenderer->GetCamera()->SetViewMatrix(rightView);
+	//_rightRenderer->GetCamera()->SetProjectionMatrix(rightProj);
 }
 
 void Window::RenderModelsLeft()

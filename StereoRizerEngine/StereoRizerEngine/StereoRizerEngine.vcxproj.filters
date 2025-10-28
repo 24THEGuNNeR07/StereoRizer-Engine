@@ -5,121 +5,175 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
+    <Filter Include="Source Files\Core">
+      <UniqueIdentifier>{F23E4F6D-7AC2-4D3A-B1CC-08D63F52935B}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Graphics">
+      <UniqueIdentifier>{A8B7C3D2-6E91-4F2A-9D5C-0F2E8D3A4B5C}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\XR">
+      <UniqueIdentifier>{B9C8E5F4-7D23-4A1B-8E6C-1F3E9D2C5A4D}</UniqueIdentifier>
+    </Filter>
+
     <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <UniqueIdentifier>{93995380-89BD-4B04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
+    <Filter Include="Header Files\Core">
+      <UniqueIdentifier>{E4F5D6C7-8B9A-4C2B-90D8-2E1F3A4B5C6D}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Graphics">
+      <UniqueIdentifier>{D5E6F7G8-9H0I-4J2K-8L3M-4N5O6P7Q8R9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\XR">
+      <UniqueIdentifier>{S1T2U3V4-5W6X-7Y8Z-9A0B-1C2D3E4F5G6}</UniqueIdentifier>
+    </Filter>
+
     <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <UniqueIdentifier>{67DA6AB6-F800-4C08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
     <Filter Include="Resource Files\Shaders">
-      <UniqueIdentifier>{3020290e-8306-4ac7-9f26-7396cbb559ba}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Resource Files\Models">
-      <UniqueIdentifier>{68b61a05-869b-4763-a6c6-9fc89a1056ac}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Core">
-      <UniqueIdentifier>{f23e4f6d-7ac2-4d3a-b1cc-08d63f52935b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\Graphics">
-      <UniqueIdentifier>{a8b7c3d2-6e91-4f2a-9d5c-0f2e8d3a4b5c}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\XR">
-      <UniqueIdentifier>{b9c8e5f4-7d23-4a1b-8e6c-1f3e9d2c5a4d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Core">
-      <UniqueIdentifier>{e4f5d6c7-8b9a-4c2b-90d8-2e1f3a4b5c6d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Graphics">
-      <UniqueIdentifier>{d5e6f7g8-9h0i-4j2k-8l3m-4n5o6p7q8r9}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\XR">
-      <UniqueIdentifier>{s1t2u3v4-5w6x-7y8z-9a0b-1c2d3e4f5g6}</UniqueIdentifier>
+      <UniqueIdentifier>{3020290E-8306-4AC7-9F26-7396CBB559BA}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
+
   <ItemGroup>
+    <!-- Core sources -->
     <ClCompile Include="src\core\Main.cpp">
       <Filter>Source Files\Core</Filter>
     </ClCompile>
     <ClCompile Include="src\core\Window.cpp">
       <Filter>Source Files\Core</Filter>
     </ClCompile>
-    <ClCompile Include="src\graphics\Shader.cpp">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\Renderer.cpp">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\Mesh.cpp">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\Model.cpp">
+
+    <!-- Graphics sources -->
+    <ClCompile Include="src\graphics\AssimpModel.cpp">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\Camera.cpp">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="src\xr\OpenXRSupport.cpp">
-      <Filter>Source Files\XR</Filter>
-    </ClCompile>
-    <ClCompile Include="src\graphics\VertexBuffer.cpp">
+    <ClCompile Include="src\graphics\ElementBuffer.cpp">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="src\graphics\ElementBuffer.cpp">
+    <ClCompile Include="src\graphics\Light.cpp">
+      <Filter>Source Files\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\LightManager.cpp">
+      <Filter>Source Files\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\Material.cpp">
+      <Filter>Source Files\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\Mesh.cpp">
+      <Filter>Source Files\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\Renderer.cpp">
+      <Filter>Source Files\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\RenderObject.cpp">
+      <Filter>Source Files\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\Shader.cpp">
+      <Filter>Source Files\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\ShaderUniform.cpp">
+      <Filter>Source Files\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\Texture2D.cpp">
+      <Filter>Source Files\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\graphics\Transform.cpp">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
     <ClCompile Include="src\graphics\VertexArray.cpp">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
+    <ClCompile Include="src\graphics\VertexBuffer.cpp">
+      <Filter>Source Files\Graphics</Filter>
+    </ClCompile>
+
+    <!-- XR sources -->
+    <ClCompile Include="src\xr\OpenXRSupport.cpp">
+      <Filter>Source Files\XR</Filter>
+    </ClCompile>
   </ItemGroup>
+
   <ItemGroup>
-    <ClInclude Include="include\core\Window.h">
-      <Filter>Header Files\Core</Filter>
-    </ClInclude>
+    <!-- Core headers -->
     <ClInclude Include="include\core\Common.h">
       <Filter>Header Files\Core</Filter>
     </ClInclude>
-    <ClInclude Include="include\graphics\Shader.h">
-      <Filter>Header Files\Graphics</Filter>
+    <ClInclude Include="include\core\Utils.h">
+      <Filter>Header Files\Core</Filter>
     </ClInclude>
-    <ClInclude Include="include\graphics\Renderer.h">
-      <Filter>Header Files\Graphics</Filter>
+    <ClInclude Include="include\core\Window.h">
+      <Filter>Header Files\Core</Filter>
     </ClInclude>
-    <ClInclude Include="include\graphics\Mesh.h">
-      <Filter>Header Files\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="include\graphics\Model.h">
+
+    <!-- Graphics headers -->
+    <ClInclude Include="include\graphics\AssimpModel.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="include\graphics\Camera.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="include\graphics\GfxAPIUtils.h">
+    <ClInclude Include="include\graphics\ElementBuffer.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="include\xr\OpenXRSupport.h">
-      <Filter>Header Files\XR</Filter>
-    </ClInclude>
-    <ClInclude Include="include\graphics\VertexBuffer.h">
+    <ClInclude Include="include\graphics\GfxAPIUtils.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="include\graphics\GLObject.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="include\graphics\VertexArray.h">
+    <ClInclude Include="include\graphics\Light.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="include\graphics\ElementBuffer.h">
+    <ClInclude Include="include\graphics\LightManager.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="include\graphics\Transform.h">
+    <ClInclude Include="include\graphics\Material.h">
+      <Filter>Header Files\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="include\graphics\Mesh.h">
+      <Filter>Header Files\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="include\graphics\Renderer.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="include\graphics\RenderObject.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
+    <ClInclude Include="include\graphics\Shader.h">
+      <Filter>Header Files\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="include\graphics\ShaderUniform.h">
+      <Filter>Header Files\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="include\graphics\Texture.h">
+      <Filter>Header Files\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="include\graphics\Transform.h">
+      <Filter>Header Files\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="include\graphics\Vertex.h">
+      <Filter>Header Files\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="include\graphics\VertexArray.h">
+      <Filter>Header Files\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="include\graphics\VertexBuffer.h">
+      <Filter>Header Files\Graphics</Filter>
+    </ClInclude>
+
+    <!-- XR headers -->
+    <ClInclude Include="include\xr\OpenXRSupport.h">
+      <Filter>Header Files\XR</Filter>
+    </ClInclude>
   </ItemGroup>
+
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="resources\shaders\Flat.shader">
