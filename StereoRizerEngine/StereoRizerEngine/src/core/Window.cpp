@@ -47,17 +47,23 @@ void Window::SwapBuffers()
 
 void Window::AddModel(std::shared_ptr<AssimpModel> model)
 {
-	if (!model) return;
+	/*if (!model) return;
 	if (std::find(_models.begin(), _models.end(), model) == _models.end())
-		_models.push_back(model);
+		_models.push_back(model);*/
+
+	Shader* test = new Shader("resources/shaders/Phong.shader");
+	Material* testMat = new Material(*test, "testMat");
+
+	_leftRenderer->addModel(*testMat, "../models/Suzanne.obj");
+	_rightRenderer->addModel(*testMat, "../models/Suzanne.obj");
 }
 
 void Window::RemoveModel(std::shared_ptr<AssimpModel> model)
 {
-	if (!model) return;
+	/*if (!model) return;
 	auto it = std::find(_models.begin(), _models.end(), model);
 	if (it != _models.end())
-		_models.erase(it);
+		_models.erase(it);*/
 }
 
 void Window::UpdateXRViews()
@@ -86,21 +92,13 @@ void Window::UpdateXRViews()
 void Window::RenderModelsLeft()
 {
 	if (!_leftRenderer) return;
-	for (auto& m : _models)
-	{
-		if (m)
-			_leftRenderer->Draw(m);
-	}
+	_leftRenderer->draw();
 }
 
 void Window::RenderModelsRight()
 {
 	if (!_rightRenderer) return;
-	for (auto& m : _models)
-	{
-		if (m)
-			_rightRenderer->Draw(m);
-	}
+	_rightRenderer->draw();
 }
 
 void Window::Run()

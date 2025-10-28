@@ -14,7 +14,6 @@
     <Filter Include="Source Files\XR">
       <UniqueIdentifier>{B9C8E5F4-7D23-4A1B-8E6C-1F3E9D2C5A4D}</UniqueIdentifier>
     </Filter>
-
     <Filter Include="Header Files">
       <UniqueIdentifier>{93995380-89BD-4B04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
@@ -28,7 +27,6 @@
     <Filter Include="Header Files\XR">
       <UniqueIdentifier>{S1T2U3V4-5W6X-7Y8Z-9A0B-1C2D3E4F5G6}</UniqueIdentifier>
     </Filter>
-
     <Filter Include="Resource Files">
       <UniqueIdentifier>{67DA6AB6-F800-4C08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
@@ -37,7 +35,6 @@
       <UniqueIdentifier>{3020290E-8306-4AC7-9F26-7396CBB559BA}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
-
   <ItemGroup>
     <!-- Core sources -->
     <ClCompile Include="src\core\Main.cpp">
@@ -46,7 +43,6 @@
     <ClCompile Include="src\core\Window.cpp">
       <Filter>Source Files\Core</Filter>
     </ClCompile>
-
     <!-- Graphics sources -->
     <ClCompile Include="src\graphics\AssimpModel.cpp">
       <Filter>Source Files\Graphics</Filter>
@@ -93,25 +89,19 @@
     <ClCompile Include="src\graphics\VertexBuffer.cpp">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
-
     <!-- XR sources -->
     <ClCompile Include="src\xr\OpenXRSupport.cpp">
       <Filter>Source Files\XR</Filter>
     </ClCompile>
   </ItemGroup>
-
   <ItemGroup>
     <!-- Core headers -->
     <ClInclude Include="include\core\Common.h">
       <Filter>Header Files\Core</Filter>
     </ClInclude>
-    <ClInclude Include="include\core\Utils.h">
-      <Filter>Header Files\Core</Filter>
-    </ClInclude>
     <ClInclude Include="include\core\Window.h">
       <Filter>Header Files\Core</Filter>
     </ClInclude>
-
     <!-- Graphics headers -->
     <ClInclude Include="include\graphics\AssimpModel.h">
       <Filter>Header Files\Graphics</Filter>
@@ -167,13 +157,14 @@
     <ClInclude Include="include\graphics\VertexBuffer.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
-
     <!-- XR headers -->
     <ClInclude Include="include\xr\OpenXRSupport.h">
       <Filter>Header Files\XR</Filter>
     </ClInclude>
+    <ClInclude Include="include\core\Utils.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
   </ItemGroup>
-
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="resources\shaders\Flat.shader">

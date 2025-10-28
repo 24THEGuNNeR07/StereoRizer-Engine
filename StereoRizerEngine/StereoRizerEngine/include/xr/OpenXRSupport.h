@@ -10,10 +10,10 @@
 #include "openxr/openxr.h"
 #include "openxr/openxr_platform.h"
 
+#include <glad.h>
 #include <vector>
 #include <iostream>
 
-#include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 

@@ -106,7 +106,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>include;..\external\glfw\include;..\external\glew\include;..\external\assimp\include;..\external\glm\include;..\external\openxr\include;..\external\glad</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp20</LanguageStandard>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -167,6 +167,7 @@ copy /Y "..\external\assimp\bin\Debug\assimp-vc143-mtd.dll" "$(TargetDir)"</Comm
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\core\Common.h" />
+    <ClInclude Include="include\core\Utils.h" />
     <ClInclude Include="include\graphics\AssimpModel.h" />
     <ClInclude Include="include\graphics\Camera.h" />
     <ClInclude Include="include\graphics\ElementBuffer.h" />

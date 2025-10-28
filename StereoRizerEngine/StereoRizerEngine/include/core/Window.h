@@ -7,7 +7,6 @@
 #include <Windows.h>
 #include <unknwn.h>
 
-#include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
 #define XR_USE_GRAPHICS_API_OPENGL
