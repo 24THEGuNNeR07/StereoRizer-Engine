@@ -150,6 +150,7 @@ copy /Y "..\external\assimp\bin\Debug\assimp-vc143-mtd.dll" "$(TargetDir)"</Comm
     <ClCompile Include="src\graphics\AssimpModel.cpp" />
     <ClCompile Include="src\graphics\Camera.cpp" />
     <ClCompile Include="src\graphics\ElementBuffer.cpp" />
+    <ClCompile Include="src\graphics\glad.c" />
     <ClCompile Include="src\graphics\Light.cpp" />
     <ClCompile Include="src\graphics\LightManager.cpp" />
     <ClCompile Include="src\graphics\Material.cpp" />

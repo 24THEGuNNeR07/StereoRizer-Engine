@@ -13,6 +13,7 @@ namespace stereorizer::graphics
 
 	public:
 		Mesh(uint32_t id, RenderObjectData objectParams, Material* const material, std::vector<Vertex>& vertices, std::vector<uint32_t>& indices, bool move);
+		Mesh(uint32_t id, const Mesh& from);
 
 		virtual void initObject() override;
 	};

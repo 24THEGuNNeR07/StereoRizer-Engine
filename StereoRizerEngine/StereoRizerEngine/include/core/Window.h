@@ -7,6 +7,8 @@
 #include <Windows.h>
 #include <unknwn.h>
 
+#include <glad.h>
+#define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
 #define XR_USE_GRAPHICS_API_OPENGL
@@ -16,6 +18,7 @@
 
 #include "graphics/Renderer.h"
 #include "graphics/GfxAPIUtils.h"
+#include <graphics/AssimpModel.h>
 #include "xr/OpenXRSupport.h"
 #include <vector>
 #include <algorithm>
@@ -23,6 +26,8 @@
 #include <functional>
 #include <vector>
 #include <algorithm>
+
+using namespace stereorizer::graphics;
 
 namespace stereorizer::core
 { 
@@ -38,8 +43,8 @@ namespace stereorizer::core
 		void Run();
 
 		// Manage scene models owned by the application (Window stores non-owning pointers)
-		void AddModel(std::shared_ptr<stereorizer::graphics::AssimpModel> model);
-		void RemoveModel(std::shared_ptr<stereorizer::graphics::AssimpModel> model);
+		void AddModel(AssimpModel& model);
+		void RemoveModel(AssimpModel* model);
 
 		int GetWidth() const;
 		int GetHeight() const;

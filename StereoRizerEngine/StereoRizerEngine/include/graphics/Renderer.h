@@ -34,7 +34,7 @@ namespace stereorizer::graphics
 		std::vector<const ElementBuffer*> elementBuffers;
 
 	public:
-		static Renderer* renderer;
+
 		FreeCamera* camera;
 		LightManager* lightManager;
 
@@ -48,7 +48,7 @@ namespace stereorizer::graphics
 
 		AssimpModel* addModel(const Material& baseMaterial, const char* path);
 
-		Mesh* addMesh(RenderObjectData data, Material* material, std::vector<Vertex>& vertices, std::vector<uint32_t>& indices);
+		void addMesh(Mesh* mesh);
 
 		template<typename Type>
 		Type* cloneObject(const Type& from)

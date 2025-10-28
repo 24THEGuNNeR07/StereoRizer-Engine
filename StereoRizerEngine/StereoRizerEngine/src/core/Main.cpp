@@ -1,24 +1,18 @@
-#include "core/Window.h"
-#include "graphics/Shader.h"
-#include "graphics/AssimpModel.h"
-#include "graphics/Mesh.h"
-
-#include <iostream>
-#include <memory>
+#include <core/Window.h>
+#include <graphics/AssimpModel.h>
 
 int main()
 {
     stereorizer::core::Window window(800, 600, "StereoRizer Engine");
 
-	std::shared_ptr<stereorizer::graphics::Mesh> mesh = std::make_shared<stereorizer::graphics::Mesh>("../models/Suzanne.obj");
-	std::shared_ptr<stereorizer::graphics::Shader> shader = std::make_shared<stereorizer::graphics::Shader>("resources/shaders/Phong.shader");
+	stereorizer::graphics::Shader* shader = new stereorizer::graphics::Shader("./resources/shaders/Phong.shader");
+    stereorizer::graphics::Material* litMat = new stereorizer::graphics::Material(*shader, "testMat");
 
-    auto model = std::make_shared<stereorizer::graphics::AssimpModel>(mesh, shader);
+    stereorizer::graphics::AssimpModel* model = new stereorizer::graphics::AssimpModel("../models/Suzanne.obj", *litMat);
 
-    /*model->Translate(glm::vec3(0.0f, 0.0f, -3.0f));
-    model->Rotate(45.0f, glm::vec3(0.0, 1.0f, 0.0));*/
+	model->meshes[0]->setPosition({ 0.0f, 0.0f, -5.0f });
 
-    window.AddModel(model);
+    window.AddModel(*model);
     window.Run();
 
     return 0;

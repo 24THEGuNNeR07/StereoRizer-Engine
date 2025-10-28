@@ -2,11 +2,13 @@
 #include <glad.h>
 
 #include <graphics/GLObject.h>
-#include <graphics/VertexBuffer.h>
-#include <graphics/ElementBuffer.h>
 
 namespace stereorizer::graphics
 {
+	// Forward declarations
+	class VertexBuffer;
+	class ElementBuffer;
+
 	enum class DrawType
 	{
 		TRIANGLES = GL_TRIANGLES, LINES = GL_LINES, POINTS = GL_POINTS

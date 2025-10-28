@@ -44,19 +44,19 @@ void RenderObject::updateMVP(FreeCamera &camera)
 	glm::mat4 MVP = VP * model;
 	glm::mat4 MV = V * model;
 
-	material->shader.setUniform<glm::mat4>("model.M", model);
-	material->shader.setUniform<glm::mat4>("model.IM", invModel);
-	material->shader.setUniform<glm::mat4>("model.TIM", transInvModel);
+	material->shader.setUniform<glm::mat4>("M", model);
+	//material->shader.setUniform<glm::mat4>("model.IM", invModel);
+	material->shader.setUniform<glm::mat4>("TIM", transInvModel);
 
-	material->shader.setUniform<glm::mat4>("model.MVP", MVP);
-	material->shader.setUniform<glm::mat4>("model.MV", MV);
-	if(camera.isVPUpdated()) // TODO update VP in renderer/camera
+	material->shader.setUniform<glm::mat4>("MVP", MVP);
+	//material->shader.setUniform<glm::mat4>("model.MV", MV);
+	/*if(camera.isVPUpdated())
 	{
 		material->shader.setUniform("model.P", P);
 		material->shader.setUniform("model.VP", VP);
 		material->shader.setUniform("model.V", V);
 		material->shader.setUniform("camera.viewPos", camera.getCameraPos());
-	}
+	}*/
 }
 
 void RenderObject::draw(FreeCamera &camera)

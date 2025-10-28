@@ -1,6 +1,6 @@
 ﻿#include "core/Window.h"
 #include "graphics/Shader.h"
-#include "graphics/AssimpModel.h"
+#include <graphics/AssimpModel.h>
 #include "core/Common.h"
 #include "graphics/Renderer.h"
 #include "xr/OpenXRSupport.h"
@@ -16,8 +16,13 @@ Window::Window(int width, int height, const char* title)
 	// initialize unique_ptr with nullptr and custom deleter
 	_window = std::unique_ptr<GLFWwindow, std::function<void(GLFWwindow*)>>(nullptr, [](GLFWwindow* w){ if (w) glfwDestroyWindow(w); });
 	Create();
-	_leftRenderer = std::make_unique<Renderer>();
-	_rightRenderer = std::make_unique<Renderer>();
+	
+	// Calculate aspect ratio and create renderers
+	float aspectRatio = static_cast<float>(_width / 2) / static_cast<float>(_height);
+	RendererData rendererDataLeft; // Uses default constructor with default values
+	RendererData rendererDataRight; // Uses default constructor with default values
+	_leftRenderer = std::make_unique<Renderer>(rendererDataLeft, aspectRatio);
+	_rightRenderer = std::make_unique<Renderer>(rendererDataRight, aspectRatio);
 }
 
 Window::~Window()
@@ -45,7 +50,7 @@ void Window::SwapBuffers()
 	glfwSwapBuffers(_window.get());
 }
 
-void Window::AddModel(std::shared_ptr<AssimpModel> model)
+void Window::AddModel(AssimpModel& model)
 {
 	/*if (!model) return;
 	if (std::find(_models.begin(), _models.end(), model) == _models.end())
@@ -58,7 +63,7 @@ void Window::AddModel(std::shared_ptr<AssimpModel> model)
 	_rightRenderer->addModel(*testMat, "../models/Suzanne.obj");
 }
 
-void Window::RemoveModel(std::shared_ptr<AssimpModel> model)
+void Window::RemoveModel(AssimpModel* model)
 {
 	/*if (!model) return;
 	auto it = std::find(_models.begin(), _models.end(), model);
@@ -118,16 +123,18 @@ void Window::Run()
 		// Clear window backbuffer (we render the app into backbuffer halves)
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glViewport(0, 0, _width, _height);
+		
+		glClearColor(1.0f, 0.0f, 1.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+		
 		if (_xrInitialized)
 			UpdateXRViews();
 
-	glViewport(0, 0, _width / 2, _height);
-	RenderModelsLeft();
+		glViewport(0, 0, _width / 2, _height);
+		RenderModelsLeft();
 
-	glViewport(_width / 2, 0, _width / 2, _height);
-	RenderModelsRight();
+		glViewport(_width / 2, 0, _width / 2, _height);
+		RenderModelsRight();
 
 		// Ensure all draws are finished into backbuffer before we read from it
 		// (glFlush should be sufficient usually; use glFinish for debugging)
@@ -167,7 +174,12 @@ void Window::Create()
 	GLFWwindow* raw = glfwCreateWindow(_width, _height, _title, NULL, NULL);
 	_window.reset(raw);
 	glfwMakeContextCurrent(_window.get());
-	glewInit();
+	
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+	{
+		std::cout << "Failed to initialize GLAD" << std::endl;
+		return;
+	}
 
 	// DEBUG: Check GPU
 	LOG_INFO(std::string("GL Renderer: ") + reinterpret_cast<const char*>(glGetString(GL_RENDERER)));

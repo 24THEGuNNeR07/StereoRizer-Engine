@@ -7,10 +7,9 @@ uint32_t RendererData::getClearMask()
 	return (clearColor * GL_COLOR_BUFFER_BIT) | (clearDepth * GL_DEPTH_BUFFER_BIT);
 }
 
-Renderer *Renderer::renderer;
 Renderer::Renderer(RendererData data, float aspectRatio) : camera(new FreeCamera(glm::vec3(0.0f), aspectRatio)), data(data), lightManager(new LightManager())
 {
-	renderer = this;
+
 }
 
 void Renderer::init()
@@ -37,23 +36,28 @@ SimpleRenderObject *Renderer::addSimpleObject(RenderObjectData data, Material *m
 	return renderObject;
 }
 
-Mesh *Renderer::addMesh(RenderObjectData data, Material *material, std::vector<Vertex> &vertices, std::vector<uint32_t> &indices)
+void Renderer::addMesh(Mesh* mesh)
 {
 	uint32_t id = itemCount++;
-	Mesh *mesh = new Mesh(id, data, material, vertices, indices, true);
 	addRenderObject(mesh);
-	return mesh;
 }
 
 AssimpModel *Renderer::addModel(const Material &baseMaterial, const char *path)
 {
-	return new AssimpModel(path, baseMaterial);
+	auto model = new AssimpModel(path, baseMaterial);
+
+	for (auto& mesh : model->meshes)
+	{
+		addMesh(mesh);
+	}
+
+	return model;
 }
 
 void Renderer::draw()
 {
-	glClearColor(data.resetCol[0], data.resetCol[1], data.resetCol[2], data.resetCol[3]);
-	glClear(data.getClearMask());
+	//glClearColor(data.resetCol[0], data.resetCol[1], data.resetCol[2], data.resetCol[3]);
+	//glClear(data.getClearMask());
 
 	camera->updateMatrices();
 

@@ -24,7 +24,7 @@ namespace stereorizer::graphics
 	private:
 		std::unordered_map<std::string, int32_t> uniformLocations;
 		std::unordered_map<std::string, int> textureIndices;
-		int32_t lastMaterial = -1;
+		//int32_t lastMaterial = -1;
 		std::string _filePath;
 		std::filesystem::file_time_type _lastWriteTime;
 
@@ -33,6 +33,9 @@ namespace stereorizer::graphics
 		const uint32_t textureCount;
 		Shader(const std::string& file);
 
+		void Bind() { glUseProgram(id); }
+		void Unbind() { glUseProgram(0); }
+
 		bool ReloadIfChanged();
 		GLuint CreateShader(const std::string& vertexShader, const std::string& fragmentShader);
 		GLuint CompileShader(const std::string& source, GLenum type);
@@ -40,8 +43,8 @@ namespace stereorizer::graphics
 		int32_t getUniformLocation(const std::string& name);
 		//adds to the texture indices if texture doesn't exist
 		int32_t getTextureIndex(const char* name);
-		void setLastMaterial(int32_t material);
-		int32_t getLastMaterial();
+		//void setLastMaterial(int32_t material);
+		//int32_t getLastMaterial();
 		template <typename T>
 		void setUniform(const int32_t location, const T& val);
 		template <typename T>

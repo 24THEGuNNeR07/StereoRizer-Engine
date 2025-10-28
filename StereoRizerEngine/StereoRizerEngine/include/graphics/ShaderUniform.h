@@ -5,7 +5,6 @@
 #include <core/Utils.h>
 #include <graphics/Shader.h>
 #include <graphics/Texture.h>
-#include <graphics/Material.h>
 
 namespace stereorizer::graphics
 {

@@ -1,4 +1,5 @@
 #include <graphics/Material.h>
+#include <graphics/ShaderUniform.h>
 
 using namespace stereorizer::graphics;
 
@@ -6,12 +7,12 @@ uint32_t Material::materialCount = 0;
 
 Material::Material(Shader &shader, const char *name) : materialID(materialCount++), shader(shader), name(name)
 {
-	shader.setLastMaterial(materialID);
+	//shader.setLastMaterial(materialID);
 }
 
 Material::Material(const Material &other, const char *name) : materialID(materialCount++), shader(other.shader), name(name)
 {
-	shader.setLastMaterial(materialID);
+	//shader.setLastMaterial(materialID);
 	for(auto &it : other.uniforms)
 	{
 		uniforms.emplace(it.first, it.second->clone(*this, it.second));
@@ -20,19 +21,21 @@ Material::Material(const Material &other, const char *name) : materialID(materia
 
 void Material::use()
 {
-	shader.useIfNecessary();
-	bool isLast = isLastMaterial();
-	for(auto &it : uniforms)
+	//shader.ReloadIfChanged();
+	//shader.useIfNecessary();
+	shader.Bind();
+	//bool isLast = isLastMaterial();
+	/*for(auto &it : uniforms)
 	{
 		it.second->updateUniform(false);
-	}
-	shader.setLastMaterial(materialID);
+	}*/
+	//shader.setLastMaterial(materialID);
 }
 
-bool Material::isLastMaterial()
-{
-	return shader.getLastMaterial() == materialID;
-}
+//bool Material::isLastMaterial()
+//{
+	//return shader.getLastMaterial() == materialID;
+//}
 
 template<>
 std::unique_ptr<IShaderUniform> &Material::createUniform<Texture2D *>(const char *name, Texture2D *const &value)

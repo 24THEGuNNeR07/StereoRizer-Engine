@@ -1,4 +1,6 @@
 #include <graphics/VertexArray.h>
+#include <graphics/VertexBuffer.h>
+#include <graphics/ElementBuffer.h>
 
 using namespace stereorizer::graphics;
 

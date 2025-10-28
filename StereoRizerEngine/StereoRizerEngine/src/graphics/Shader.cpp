@@ -11,15 +11,15 @@ Shader::Shader(const std::string& filepath)
 	_lastWriteTime = GetLastWriteTime();
 
 	ShaderProgramSource source = ParseShader(filepath);
-	CreateShader(source.VertexSource, source.FragmentSource);
+	id = CreateShader(source.VertexSource, source.FragmentSource);
 }
 
 GLuint Shader::CompileShader(const std::string& source, GLenum type)
 {
-	unsigned int id = glCreateShader(type);
+	unsigned int idLocal = glCreateShader(type);
 	const char* src = source.c_str();
-	glShaderSource(id, 1, &src, nullptr);
-	glCompileShader(id);
+	glShaderSource(idLocal, 1, &src, nullptr);
+	glCompileShader(idLocal);
 
 	int result;
 	glGetShaderiv(id, GL_COMPILE_STATUS, &result);
@@ -50,7 +50,7 @@ unsigned int Shader::CreateShader(const std::string& vertexShader, const std::st
 	glDeleteShader(vs);
 	glDeleteShader(fs);
 
-	use();
+	//use();
 	return program;
 }
 
@@ -62,15 +62,8 @@ bool Shader::ReloadIfChanged()
 		std::cout << "Reloading shader..." << std::endl;
 
 		ShaderProgramSource newSource = ParseShader(_filePath);
-		unsigned int newShader = CreateShader(newSource.VertexSource, newSource.FragmentSource);
-		if (newShader != 0) {
-			glDeleteProgram(id);
-			id = newShader;
-			glUseProgram(id);
-			return true;
-		}
-		else
-			return false;
+		CreateShader(newSource.VertexSource, newSource.FragmentSource);
+		return true;
 	}
 	else
 		return false;
@@ -150,15 +143,15 @@ int32_t Shader::getTextureIndex(const char *name)
 	}
 }
 
-void Shader::setLastMaterial(int32_t material)
-{
-	lastMaterial = material;
-}
-
-int32_t Shader::getLastMaterial()
-{
-	return lastMaterial;
-}
+//void Shader::setLastMaterial(int32_t material)
+//{
+//	lastMaterial = material;
+//}
+//
+//int32_t Shader::getLastMaterial()
+//{
+//	return lastMaterial;
+//}
 
 template<>
 void Shader::setUniform(const int32_t location, const bool &value)

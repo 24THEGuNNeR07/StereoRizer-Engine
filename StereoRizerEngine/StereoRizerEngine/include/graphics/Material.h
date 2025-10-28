@@ -1,13 +1,17 @@
 #pragma once
 #include <string>
 #include <unordered_map>
-#include <graphics/Shader.h>
-#include <graphics/ShaderUniform.h>
-
 #include <memory>
+
+#include <graphics/Shader.h>
 
 namespace stereorizer::graphics
 {
+	// Forward declaration
+	class IShaderUniform;
+	template<typename T>
+	class ShaderUniform;
+
 	struct MaterialSettings
 	{
 
@@ -27,21 +31,31 @@ namespace stereorizer::graphics
 		Material(const Material& other) = delete;
 		void use();
 
-		bool isLastMaterial();
+		//bool isLastMaterial();
 
-		template<typename T>
-		void setUniform(const char* name, const T& value)
-		{
-			auto it = uniforms.find(name);
-			if (it == uniforms.end())
-			{
-				createUniform<T>(name, value)->updateUniform(true);
-				return;
-			}
-			((ShaderUniform<T>*)it->second.get())->set(value);
-		}
+		/*template<typename T>
+		void setUniform(const char* name, const T& value);*/
 	private:
 		template<typename T>
 		std::unique_ptr<IShaderUniform>& createUniform(const char* name, const T& value);
 	};
 }
+
+// Include ShaderUniform.h after Material class definition to avoid circular dependency
+//#include <graphics/ShaderUniform.h>
+//
+//namespace stereorizer::graphics
+//{
+//	// Template implementation (must be in header for templates)
+//	template<typename T>
+//	inline void Material::setUniform(const char* name, const T& value)
+//	{
+//		auto it = uniforms.find(name);
+//		if (it == uniforms.end())
+//		{
+//			createUniform<T>(name, value).get()->updateUniform(true);
+//			return;
+//		}
+//		((ShaderUniform<T>*)it->second.get())->set(value);
+//	}
+//}

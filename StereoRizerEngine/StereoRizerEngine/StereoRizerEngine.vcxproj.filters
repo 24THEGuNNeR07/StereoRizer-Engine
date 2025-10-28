@@ -93,6 +93,9 @@
     <ClCompile Include="src\xr\OpenXRSupport.cpp">
       <Filter>Source Files\XR</Filter>
     </ClCompile>
+    <ClCompile Include="src\graphics\glad.c">
+      <Filter>Source Files\Graphics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <!-- Core headers -->

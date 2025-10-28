@@ -1,4 +1,5 @@
 #include <graphics/Mesh.h>
+#include <graphics/RenderObject.h>
 
 using namespace stereorizer::graphics;
 
@@ -14,6 +15,10 @@ Mesh::Mesh(uint32_t id, RenderObjectData objectParams, Material *const material,
 		this->vertices = vertices;
 		this->indices = indices;
 	}
+}
+
+Mesh::Mesh(uint32_t id, const Mesh& from) : RenderObject(id, from), vertices(from.vertices), indices(from.indices)
+{
 }
 
 

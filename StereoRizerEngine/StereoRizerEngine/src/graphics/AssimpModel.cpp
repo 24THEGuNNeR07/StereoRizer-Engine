@@ -40,7 +40,7 @@ void AssimpModel::processNode(aiNode *node, const aiScene *scene)
 	}
 }
 
-Mesh *AssimpModel::processMesh(aiMesh *mesh, const aiScene *scene)
+Mesh* AssimpModel::processMesh(aiMesh *mesh, const aiScene *scene)
 {
 	std::vector<Vertex> vertices;
 	std::vector<uint32_t> indices;
@@ -80,7 +80,7 @@ Mesh *AssimpModel::processMesh(aiMesh *mesh, const aiScene *scene)
 		}
 	}
 
-	return Renderer::renderer->addMesh(data, materials[mesh->mMaterialIndex], vertices, indices);
+	return new Mesh(meshes.size(), this->data, materials[mesh->mMaterialIndex], vertices, indices, true);
 }
 
 void AssimpModel::processMaterials(const aiScene *scene)
@@ -92,7 +92,7 @@ void AssimpModel::processMaterials(const aiScene *scene)
 		Material *genMat = new Material(material, curMat->GetName().C_Str());
 		materials.push_back(genMat);
 
-		loadMaterialProperties(curMat, genMat);
+		//loadMaterialProperties(curMat, genMat);
 
 	}
 }
@@ -103,45 +103,45 @@ void loadColorProperty(aiMaterial *aiMat, Material *genMat, const char *aiKey, u
 	aiMat->Get(aiKey, type, idx, aiCol);
 	std::cout << matKey << ": r: " << aiCol.r << " g: " << aiCol.g << " b: " << aiCol.b << std::endl;
 	glm::vec3 col(aiCol.r, aiCol.g, aiCol.b);
-	genMat->setUniform<glm::vec3>(matKey, col);
+	//genMat->setUniform<glm::vec3>(matKey, col);
 }
 
-void AssimpModel::loadMaterialProperties(aiMaterial *aiMat, Material *genMat)
-{
-	loadColorProperty(aiMat, genMat, AI_MATKEY_COLOR_DIFFUSE, "diffuseCol");
-	loadColorProperty(aiMat, genMat, AI_MATKEY_COLOR_SPECULAR, "specularCol");
+//void AssimpModel::loadMaterialProperties(aiMaterial *aiMat, Material *genMat)
+//{
+	//loadColorProperty(aiMat, genMat, AI_MATKEY_COLOR_DIFFUSE, "diffuseCol");
+	//loadColorProperty(aiMat, genMat, AI_MATKEY_COLOR_SPECULAR, "specularCol");
 	//loadColorProperty(aiMat, genMat, AI_MATKEY_COLOR_AMBIENT, "ambientCol");
 
-	loadMaterialTextureType(aiMat, genMat, aiTextureType_DIFFUSE, "texture_diffuse");
-	loadMaterialTextureType(aiMat, genMat, aiTextureType_SPECULAR, "texture_specular");
-}
+	//loadMaterialTextureType(aiMat, genMat, aiTextureType_DIFFUSE, "texture_diffuse");
+	//loadMaterialTextureType(aiMat, genMat, aiTextureType_SPECULAR, "texture_specular");
+//}
 
-Texture2D *AssimpModel::loadMaterialTextureType(aiMaterial *aiMat, Material *genMat, aiTextureType type, const char *materialName)
-{
-	Texture2D *texture;
-	aiString str;
-	aiMat->GetTexture(type, 0, &str);
-	if(str.length == 0)
-	{
-		std::cout << "No texture found for " << materialName << " in Material:" << aiMat->GetName().C_Str() << std::endl;
-		return nullptr;
-	}
-	bool skip = false;
-	for(uint32_t j = 0; j < texturesLoaded.size(); j++)
-	{
-		if(std::strcmp(texturesLoaded[j]->path.c_str(), str.C_Str()) == 0)
-		{
-			texture = texturesLoaded[j];
-			skip = true;
-			break;
-		}
-	}
-	if(!skip)
-	{
-		Texture2D *genTexture = new Texture2D((directory + "/" + str.C_Str()).c_str());
-		texture = genTexture;
-		texturesLoaded.push_back(texture);
-	}
-	genMat->setUniform<Texture2D *>(materialName, texture);
-	return texture;
-}
+//Texture2D *AssimpModel::loadMaterialTextureType(aiMaterial *aiMat, Material *genMat, aiTextureType type, const char *materialName)
+//{
+//	Texture2D *texture;
+//	aiString str;
+//	aiMat->GetTexture(type, 0, &str);
+//	if(str.length == 0)
+//	{
+//		std::cout << "No texture found for " << materialName << " in Material:" << aiMat->GetName().C_Str() << std::endl;
+//		return nullptr;
+//	}
+//	bool skip = false;
+//	for(uint32_t j = 0; j < texturesLoaded.size(); j++)
+//	{
+//		if(std::strcmp(texturesLoaded[j]->path.c_str(), str.C_Str()) == 0)
+//		{
+//			texture = texturesLoaded[j];
+//			skip = true;
+//			break;
+//		}
+//	}
+//	if(!skip)
+//	{
+//		Texture2D *genTexture = new Texture2D((directory + "/" + str.C_Str()).c_str());
+//		texture = genTexture;
+//		texturesLoaded.push_back(texture);
+//	}
+//	//genMat->setUniform<Texture2D *>(materialName, texture);
+//	return texture;
+//}

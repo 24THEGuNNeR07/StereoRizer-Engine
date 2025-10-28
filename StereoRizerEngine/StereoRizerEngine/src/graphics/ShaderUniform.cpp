@@ -1,4 +1,5 @@
 #include <graphics/ShaderUniform.h>
+#include <graphics/Material.h>
 
 using namespace stereorizer::graphics;
 
@@ -19,8 +20,8 @@ std::unique_ptr<IShaderUniform>  ShaderUniform<T>::clone(Material &material, con
 template<typename T>
 void ShaderUniform<T>::updateUniform(bool newVal)
 {
-	if((!newVal || (newVal && this->material.isLastMaterial())))
-		this->material.shader.setUniform<T>("material." + this->name, this->value);
+	/*if((!newVal || (newVal && this->material.isLastMaterial())))
+		this->material.shader.setUniform<T>("material." + this->name, this->value);*/
 }
 
 TextureShaderUniform::TextureShaderUniform(Material &material, const std::string &name, Texture2D *const &value) : DefShaderUniform<Texture2D *>(material, name, value)
@@ -35,12 +36,12 @@ std::unique_ptr<IShaderUniform> TextureShaderUniform::clone(Material &material, 
 
 void TextureShaderUniform::updateUniform(bool newVal)
 {
-	if((!newVal || (newVal && material.isLastMaterial())) && texLoc >= 0)
+	/*if((!newVal || (newVal && material.isLastMaterial())) && texLoc >= 0)
 	{
 		material.shader.use();
 		glActiveTexture(GL_TEXTURE0 + texLoc);
 		get()->use();
-	}
+	}*/
 }
 
 

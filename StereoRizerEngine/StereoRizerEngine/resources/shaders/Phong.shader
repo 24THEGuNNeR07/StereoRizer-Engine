@@ -7,23 +7,17 @@ layout (location = 1) in vec3 aNormal;
 out vec3 Normal;
 out vec3 FragPos;
 
-struct Model {
-    mat4 MVP;
-    mat4 M;
-    mat4 V;
-    mat4 P;
-    mat4 VP;
-    mat4 MV;
-    mat4 TIM;
-};
-
-uniform Model model;
+uniform mat4 MVP;
+uniform mat4 M;
+uniform mat4 TIM;
 
 void main()
 {
-	gl_Position = model.MVP * vec4(aPos, 1.0);
-    FragPos = vec3(model.M * vec4(aPos, 1.0));
-    Normal = mat3(model.TIM ) * aNormal;
+    vec4 pos = vec4(aPos, 1.0);
+    pos.x *=2;
+	gl_Position = MVP * vec4(aPos, 1.0);
+    FragPos = vec3(M * vec4(aPos, 1.0));
+    Normal = mat3(TIM ) * aNormal;
 };
 
 #shader fragment
@@ -34,23 +28,6 @@ out vec4 FragColor;
 in vec3 Normal;
 in vec3 FragPos;
 
-struct Model {
-    mat4 MVP;
-    mat4 M;
-    mat4 V;
-    mat4 P;
-    mat4 VP;
-    mat4 MV;
-    mat4 TIM;
-};
-
-struct Camera {
-    vec3 viewPos;
-};
-
-uniform Model model;
-uniform Camera camera;
-
 void main()
 {
 	//vec3 N = normalize(vertex.Normal);
@@ -58,7 +35,7 @@ void main()
 	//vec3 modelPos = vec3(modelMatrix[3]);
 	//vec3 viewDir = normalize(cameraPos - modelPos);
 	//float diff = max(dot(N, viewDir), 0.0);
-	vec4 output_color = vec4(Normal, 1.0);
+	vec4 output_color = vec4(1.0, 0.0, 0.0, 1.0);
 	//output_color *= diff;
 	FragColor = output_color;
 };
