@@ -1,152 +1,158 @@
-#include "graphics/Shader.h"
-#include "core/Common.h"
+#pragma once
+#include <graphics/Shader.h>
 
 using namespace stereorizer::graphics;
+using namespace stereorizer::core;
 
-Shader::Shader(const std::string& filepath)
+Shader::Shader(const char *vtxPath, const char *fragPath)
+	: textureCount(textureCount)
 {
-	_filePath = filepath;
-	_lastWriteTime = GetLastWriteTime();
+	// 1. read code from file
+	std::string vtxShaderCodeStr = FileUtils::readFile(vtxPath);
+	std::string fragShaderCodeStr = FileUtils::readFile(fragPath);
 
-	ShaderProgramSource source = ParseShader(filepath);
-	_rendererID = CreateShader(source.VertexSource, source.FragmentSource);
-}
+	const char *vtxShaderCode = vtxShaderCodeStr.c_str();
+	const char *fragShaderCode = fragShaderCodeStr.c_str();
 
-Shader::~Shader()
-{
-	glDeleteProgram(_rendererID);
-}
+	// 2. compile shaders
 
-Shader::Shader(Shader&& other) noexcept
-{
-	_rendererID = other._rendererID;
-	_filePath = std::move(other._filePath);
-	_lastWriteTime = other._lastWriteTime;
+	uint32_t vtx, frag;
+	int32_t success;
+	char infoLog[512];
 
-	other._rendererID = 0;
-}
+	vtx = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(vtx, 1, &vtxShaderCode, NULL);
+	glCompileShader(vtx);
 
-Shader& Shader::operator=(Shader&& other) noexcept
-{
-	if (this != &other) {
-		glDeleteProgram(_rendererID);
-		_rendererID = other._rendererID;
-		_filePath = std::move(other._filePath);
-		_lastWriteTime = other._lastWriteTime;
+	glGetShaderiv(vtx, GL_COMPILE_STATUS, &success);
 
-		other._rendererID = 0;
+	if(!success)
+	{
+		glGetShaderInfoLog(vtx, 512, NULL, infoLog);
+		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
 	}
-	return *this;
+
+	frag = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(frag, 1, &fragShaderCode, NULL);
+	glCompileShader(frag);
+
+	glGetShaderiv(frag, GL_COMPILE_STATUS, &success);
+
+	if(!success)
+	{
+		glGetShaderInfoLog(frag, 512, NULL, infoLog);
+		std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
+	}
+
+	id = glCreateProgram();
+	glAttachShader(id, vtx);
+	glAttachShader(id, frag);
+	glLinkProgram(id);
+
+	glGetProgramiv(id, GL_LINK_STATUS, &success);
+
+	if(!success)
+	{
+		glGetProgramInfoLog(id, 512, NULL, infoLog);
+		std::cout << "ERROR::SHADER::PROGRAM::LINK_FAILED\n" << infoLog << std::endl;
+	}
+
+	glDeleteShader(vtx);
+	glDeleteShader(frag);
+	use();
 }
 
-void Shader::Bind() const
+int32_t Shader::getUniformLocation(const std::string &name)
 {
-	glUseProgram(_rendererID);
+	if(uniformLocations.find(name) != uniformLocations.end())
+		return uniformLocations[name];
+	useIfNecessary();
+	int32_t loc = glGetUniformLocation(id, name.c_str());
+	if(loc == -1)
+		std::cout << "Warning: uniform '" << name << "' doesn't exist!" << std::endl;
+	uniformLocations[name] = loc;
+	return loc;
 }
 
-void Shader::Unbind() const
+int32_t Shader::getTextureIndex(const char *name)
 {
-	glUseProgram(0);
-}
-
-bool Shader::ReloadIfChanged()
-{
-	fs::file_time_type currentWriteTime = GetLastWriteTime();
-	if (currentWriteTime != _lastWriteTime) {
-		_lastWriteTime = currentWriteTime;
-	LOG_INFO("Reloading shader...");
-
-		ShaderProgramSource newSource = ParseShader(_filePath);
-		unsigned int newShader = CreateShader(newSource.VertexSource, newSource.FragmentSource);
-		if (newShader != 0) {
-			glDeleteProgram(_rendererID);
-			_rendererID = newShader;
-			glUseProgram(_rendererID);
-			return true;
+	int32_t texIndex;
+	auto it = textureIndices.find(name);
+	if(it == textureIndices.end())
+	{
+		texIndex = (int32_t)textureIndices.size();
+		setUniform<int32_t>(name, texIndex);
+		if(getUniformLocation(name) == -1)
+		{
+			return -1;
 		}
-		else
-			return false;
+		textureIndices.insert({name, texIndex});
+		return texIndex;
 	}
 	else
-		return false;
-}
-
-GLuint Shader::CompileShader(const std::string& source, GLenum type)
-{
-	unsigned int id = glCreateShader(type);
-	const char* src = source.c_str();
-	glShaderSource(id, 1, &src, nullptr);
-	glCompileShader(id);
-
-	int result;
-	glGetShaderiv(id, GL_COMPILE_STATUS, &result);
-	if (result == GL_FALSE)
 	{
-		int length;
-		glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
-	std::vector<char> message(length);
-	glGetShaderInfoLog(id, length, nullptr, message.data());
-	LOG_ERROR(std::string("Failed to compile ") + (type == GL_VERTEX_SHADER ? "vertex" : "fragment") + " shader!");
-	LOG_ERROR(std::string(message.data()));
+		return it->second;
 	}
-
-	return id;
 }
 
-unsigned int Shader::CreateShader(const std::string& vertexShader, const std::string& fragmentShader)
+void Shader::setLastMaterial(int32_t material)
 {
-	unsigned int program = glCreateProgram();
-	unsigned int vs = CompileShader(vertexShader, GL_VERTEX_SHADER);
-	unsigned int fs = CompileShader(fragmentShader, GL_FRAGMENT_SHADER);
-
-	glAttachShader(program, vs);
-	glAttachShader(program, fs);
-	glLinkProgram(program);
-	glValidateProgram(program);
-
-	glDeleteShader(vs);
-	glDeleteShader(fs);
-
-	return program;
+	lastMaterial = material;
 }
 
-ShaderProgramSource Shader::ParseShader(const std::string& filepath)
+int32_t Shader::getLastMaterial()
 {
-	std::ifstream stream(filepath);
-
-	enum class ShaderType {
-		NONE = -1,
-		VERTEX = 0,
-		FRAGMENT = 1
-	};
-
-	std::string line;
-	std::stringstream ss[2];
-	ShaderType type = ShaderType::NONE;
-	while (std::getline(stream, line))
-	{
-		if (line.find("#shader") != std::string::npos)
-		{
-			if (line.find("vertex") != std::string::npos)
-				type = ShaderType::VERTEX;
-			if (line.find("fragment") != std::string::npos)
-				type = ShaderType::FRAGMENT;
-		}
-		else {
-			ss[(int)type] << line << "\n";
-		}
-	}
-
-	return { ss[0].str(), ss[1].str() };
+	return lastMaterial;
 }
 
-fs::file_time_type Shader::GetLastWriteTime()
+template<>
+void Shader::setUniform(const int32_t location, const bool &value)
 {
-	try {
-		return fs::last_write_time(_filePath);
-	}
-	catch (fs::filesystem_error& e) {
-		LOG_ERROR(std::string("Error getting last write time for shader file: ") + e.what());
-		return fs::file_time_type::min();
-	}
+	useIfNecessary();
+	glUniform1i(location, (int)value);
+}template<>
+void Shader::setUniform(const int32_t location, const int &value)
+{
+	useIfNecessary();
+	glUniform1i(location, value);
 }
+template<>
+void Shader::setUniform(const int32_t location, const float &val)
+{
+	useIfNecessary();
+	glUniform1f(location, val);
+}
+template<>
+void Shader::setUniform(const int32_t location, const glm::vec1 &val)
+{
+	useIfNecessary();
+	glUniform1f(location, val.x);
+}
+template<>
+void Shader::setUniform(const int32_t location, const glm::vec2 &val)
+{
+	useIfNecessary();
+	glUniform2f(location, val.x, val.y);
+}
+template<>
+void Shader::setUniform(const int32_t location, const glm::vec3 &val)
+{
+	useIfNecessary();
+	glUniform3f(location, val.x, val.y, val.z);
+}
+template<>
+void Shader::setUniform(const int32_t location, const glm::vec4 &val)
+{
+	useIfNecessary();
+	glUniform4f(location, val.x, val.y, val.z, val.w);
+}
+template<>
+void Shader::setUniform(const int32_t location, const glm::mat4 &val)
+{
+	useIfNecessary();
+	glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(val));
+}
+
+GLOBJ_DEFAULTS(Shader, glUseProgram, glDeleteProgram);
+
+GLOBJ_LAST_USED(Shader)

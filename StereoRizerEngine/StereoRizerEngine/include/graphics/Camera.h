@@ -1,46 +1,50 @@
 #pragma once
-#include "Shader.h"
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
 
 namespace stereorizer::graphics
 {
-	class Camera {
-	public:
-		Camera(float fov, float aspectRatio, float nearPlane, float farPlane);
-		~Camera() = default;
-
-		// Position/orientation setters
-		void SetPosition(const glm::vec3& pos);
-		void SetFront(const glm::vec3& front);
-		void SetUp(const glm::vec3& up);
-
-		void SetViewMatrix(const glm::mat4& view);
-		void SetProjectionMatrix(const glm::mat4& proj);
-
-		// Matrix getters
-		const glm::mat4& GetViewMatrix() const noexcept;
-		const glm::mat4& GetProjectionMatrix() const noexcept;
-
-		// Shader uniform upload
-		void UploadToShader(std::shared_ptr<Shader> shader) const;
+	class FreeCamera
+	{
 
 	private:
-		float _FOV;
-		float _AspectRatio;
-		float _NearPlane;
-		float _FarPlane;
+		glm::vec3 cameraPos, cameraUp;
+		glm::vec3 dir;
+		float pitch, yaw;
+		float fov;
+		float aspectRatio, nearPlane, farPlane;
+		bool changedView, changedProjection, vpUpdated;
+		glm::mat4 view, projection, vp;
+	public:
+		float maxPitch = 90.0f, minPitch = -90.0f, maxFov = 45.0f, minFov = 1.0f;
 
-		glm::vec3 _cameraPos;
-		glm::vec3 _cameraFront;
-		glm::vec3 _cameraUp;
+		FreeCamera(const glm::vec3& cameraPos, const float aspectRatio, float yaw = -90.0f, float pitch = 0.0f, float fov = 45.0f, float nearPlane = 0.1f, float farPlane = 100.0f);
 
-		glm::mat4 _projectionMatrix;
-		glm::mat4 _viewMatrix;
+		const glm::vec3& getCameraPos();
+		const glm::vec3& getCameraDir();
+		glm::vec3 getCameraRight();
+		const glm::mat4& getViewMatrix();
+		const glm::mat4& getProjectionMatrix();
+		const glm::mat4& getVPMatrix();
+		const float getPitch();
+		const float getYaw();
+		const float getFOV();
+		const float getAspectRatio();
+		const float getNearPlane();
+		const float getFarPlane();
 
-		// Matrix update
-		void UpdateViewMatrix();
-		void UpdateProjectionMatrix();
+
+		void setCameraPos(const glm::vec3& camPos);
+		void setPitch(float pitch);
+		void setYaw(float yaw);
+		void setFOV(float fov);
+		void setAspectRatio(float aspectRatio);
+		void setNearPlane(float nearPlane);
+		void setFarPlane(float farPlane);
+
+		void validateMaxMins();
+		void updateCameraDir(bool forced = false);
+		const glm::mat4& updateMatrices(bool forced = false);
+		const bool isVPUpdated();
+		void clearFlags();
 	};
 }

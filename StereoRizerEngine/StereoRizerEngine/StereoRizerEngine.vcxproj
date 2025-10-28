@@ -105,7 +105,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>include;..\external\glfw\include;..\external\glew\include;..\external\assimp\include;..\external\glm\include;..\external\openxr\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>include;..\external\glfw\include;..\external\glew\include;..\external\assimp\include;..\external\glm\include;..\external\openxr\include;..\external\glad</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
@@ -148,8 +148,11 @@ copy /Y "..\external\assimp\bin\Debug\assimp-vc143-mtd.dll" "$(TargetDir)"</Comm
   <ItemGroup>
     <ClCompile Include="src\graphics\Camera.cpp" />
     <ClCompile Include="src\core\Main.cpp" />
+    <ClCompile Include="src\graphics\ElementBuffer.cpp" />
     <ClCompile Include="src\graphics\Mesh.cpp" />
     <ClCompile Include="src\graphics\Model.cpp" />
+    <ClCompile Include="src\graphics\VertexArray.cpp" />
+    <ClCompile Include="src\graphics\VertexBuffer.cpp" />
     <ClCompile Include="src\xr\OpenXRSupport.cpp" />
     <ClCompile Include="src\graphics\Renderer.cpp" />
     <ClCompile Include="src\graphics\Shader.cpp" />
@@ -158,9 +161,15 @@ copy /Y "..\external\assimp\bin\Debug\assimp-vc143-mtd.dll" "$(TargetDir)"</Comm
   <ItemGroup>
     <ClInclude Include="include\graphics\Camera.h" />
     <ClInclude Include="include\core\Common.h" />
+    <ClInclude Include="include\graphics\ElementBuffer.h" />
     <ClInclude Include="include\graphics\GfxAPIUtils.h" />
+    <ClInclude Include="include\graphics\GLObject.h" />
     <ClInclude Include="include\graphics\Mesh.h" />
     <ClInclude Include="include\graphics\Model.h" />
+    <ClInclude Include="include\graphics\RenderObject.h" />
+    <ClInclude Include="include\graphics\Transform.h" />
+    <ClInclude Include="include\graphics\VertexArray.h" />
+    <ClInclude Include="include\graphics\VertexBuffer.h" />
     <ClInclude Include="include\xr\OpenXRSupport.h" />
     <ClInclude Include="include\graphics\Renderer.h" />
     <ClInclude Include="include\graphics\Shader.h" />

@@ -1,45 +1,44 @@
 #pragma once
-#include <GL/glew.h>
-#include <string>
+
+#include <glad.h>
 #include <iostream>
-#include <sstream>
-#include <fstream>
-#include <filesystem>
-#include <chrono>
+#include <unordered_map>
+#include <glm/glm.hpp>
 
-#include "core/Common.h"
-
-namespace fs = std::filesystem;
+#include <graphics/GLObject.h>
+#include <core/Utils.h>
+#include <glm/gtc/type_ptr.hpp>
 
 namespace stereorizer::graphics
 {
-	struct ShaderProgramSource {
-		std::string VertexSource;
-		std::string FragmentSource;
-	};
-
-	class Shader {
-	public:
-		Shader(const std::string& filepath);
-		~Shader();
-
-		Shader(Shader&& other) noexcept;
-		Shader& operator=(Shader&& other) noexcept;
-
-		void Bind() const;
-		void Unbind() const;
-		bool ReloadIfChanged();
-		GLuint GetID() const noexcept { return _rendererID; }
-
+	class Shader : public GLObject
+	{
 	private:
-		GLuint _rendererID = 0;
-		std::string _filePath;
-		fs::file_time_type _lastWriteTime;
+		std::unordered_map<std::string, int32_t> uniformLocations;
+		std::unordered_map<std::string, int> textureIndices;
+		int32_t lastMaterial = -1;
+	public:
+		uint32_t addedTextureCount = 0;
+		const uint32_t textureCount;
+		Shader(const char* vtxPath, const char* fragPath); // TODO combine vtx frag shaders to a single file, read textureCount from there
 
-		ShaderProgramSource ParseShader(const std::string& filepath);
-		fs::file_time_type GetLastWriteTime();
-
-		GLuint CreateShader(const std::string& vertexShader, const std::string& fragmentShader);
-		GLuint CompileShader(const std::string& source, GLenum type);
+		int32_t getUniformLocation(const std::string& name);
+		//adds to the texture indices if texture doesn't exist
+		int32_t getTextureIndex(const char* name);
+		void setLastMaterial(int32_t material);
+		int32_t getLastMaterial();
+		template <typename T>
+		void setUniform(const int32_t location, const T& val);
+		template <typename T>
+		void setUniform(const std::string& name, const T& val)
+		{
+			int32_t location = getUniformLocation(name);
+			if (location != -1)
+				setUniform(location, val);
+		}
+		GLOBJ_OVERRIDE(Shader)
 	};
 }
+
+
+
