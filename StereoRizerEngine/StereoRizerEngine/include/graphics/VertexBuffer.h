@@ -1,6 +1,6 @@
 #pragma once
 #include <vector>
-#include <glad/glad.h>
+#include <GL/glew.h>
 
 namespace stereorizer::graphics
 {

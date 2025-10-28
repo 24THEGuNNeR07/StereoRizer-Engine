@@ -72,9 +72,6 @@
     <ClCompile Include="src\graphics\ElementBuffer.cpp">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="src\graphics\glad.c">
-      <Filter>Source Files\Graphics</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\core\Window.h">

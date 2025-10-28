@@ -1,4 +1,3 @@
-
 #include "graphics/Renderer.h"
 #include "graphics/Camera.h"
 #include "graphics/Model.h"

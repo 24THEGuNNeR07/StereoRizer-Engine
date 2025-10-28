@@ -171,11 +171,7 @@ void Window::Create()
 	GLFWwindow* raw = glfwCreateWindow(_width, _height, _title, NULL, NULL);
 	_window.reset(raw);
 	glfwMakeContextCurrent(_window.get());
-	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-	{
-		std::cout << "Failed to initialize GLAD" << std::endl;
-		return;
-	}
+	glewInit();
 
 	// DEBUG: Check GPU
 	LOG_INFO(std::string("GL Renderer: ") + reinterpret_cast<const char*>(glGetString(GL_RENDERER)));

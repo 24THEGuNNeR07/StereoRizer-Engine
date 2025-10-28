@@ -3,7 +3,7 @@
 #include <vector>
 #include <string>
 #include <cstddef>
-#include <glad/glad.h>
+#include <GL/glew.h>
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>

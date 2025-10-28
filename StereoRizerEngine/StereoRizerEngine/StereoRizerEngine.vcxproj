@@ -105,7 +105,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>include;..\external\glfw\include;..\external\glew\include;..\external\assimp\include;..\external\glm\include;..\external\openxr\include;..\external</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>include;..\external\glfw\include;..\external\glew\include;..\external\assimp\include;..\external\glm\include;..\external\openxr\include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
@@ -149,7 +149,6 @@ copy /Y "..\external\assimp\bin\Debug\assimp-vc143-mtd.dll" "$(TargetDir)"</Comm
     <ClCompile Include="src\graphics\Camera.cpp" />
     <ClCompile Include="src\core\Main.cpp" />
     <ClCompile Include="src\graphics\ElementBuffer.cpp" />
-    <ClCompile Include="src\graphics\glad.c" />
     <ClCompile Include="src\graphics\Mesh.cpp" />
     <ClCompile Include="src\graphics\Model.cpp" />
     <ClCompile Include="src\graphics\VertexArray.cpp" />

@@ -1,5 +1,5 @@
 #pragma once
-#include <glad/glad.h>
+#include <GL/glew.h>
 #include <graphics/VertexBuffer.h>
 #include <graphics/ElementBuffer.h>
 
