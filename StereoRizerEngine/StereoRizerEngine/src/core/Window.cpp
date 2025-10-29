@@ -112,6 +112,12 @@ void Window::Run()
 
 	while (!glfwWindowShouldClose(_window.get()))
 	{
+		currentFrame = (float)glfwGetTime();
+		deltaTime = currentFrame - lastFrame;
+		lastFrame = currentFrame;
+
+		PollEvents();
+
 		glfwMakeContextCurrent(_window.get()); // force same context before every frame
 
 		glfwGetFramebufferSize(_window.get(), &_width, &_height);
@@ -126,12 +132,14 @@ void Window::Run()
 
 		if (_xrInitialized)
 			UpdateXRViews();
+		else
+			processInput(_window.get());
 
-	glViewport(0, 0, _width / 2, _height);
-	RenderModelsLeft();
+		glViewport(0, 0, _width / 2, _height);
+		RenderModelsLeft();
 
-	glViewport(_width / 2, 0, _width / 2, _height);
-	RenderModelsRight();
+		glViewport(_width / 2, 0, _width / 2, _height);
+		RenderModelsRight();
 
 		// Ensure all draws are finished into backbuffer before we read from it
 		// (glFlush should be sufficient usually; use glFinish for debugging)
@@ -142,7 +150,7 @@ void Window::Run()
         
 		SwapBuffers();
 
-		PollEvents();
+		
 	} // end while
 
 	// cleanup dstFbo
@@ -173,9 +181,82 @@ void Window::Create()
 	glfwMakeContextCurrent(_window.get());
 	glewInit();
 
+	glfwSetWindowUserPointer(_window.get(), this);
+	glfwSetCursorPosCallback(_window.get(), mouse_callback);
+
 	// DEBUG: Check GPU
 	LOG_INFO(std::string("GL Renderer: ") + reinterpret_cast<const char*>(glGetString(GL_RENDERER)));
 
 	// Now create OpenXR session, passing this context in graphics binding
 	_xrInitialized = _xrSupport.Init(m_apiType);
+}
+
+void stereorizer::core::Window::processInput(GLFWwindow* window)
+{
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+		glfwSetWindowShouldClose(window, true);
+
+	const float cameraSpeed = 2.5f * deltaTime;
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+		_leftRenderer->GetCamera()->SetPosition(_leftRenderer->GetCamera()->GetPosition() + cameraSpeed * _leftRenderer->GetCamera()->GetFront());
+		_rightRenderer->GetCamera()->SetPosition(_rightRenderer->GetCamera()->GetPosition() + cameraSpeed * _rightRenderer->GetCamera()->GetFront());
+	}
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+		_leftRenderer->GetCamera()->SetPosition(_leftRenderer->GetCamera()->GetPosition() - cameraSpeed * _leftRenderer->GetCamera()->GetFront());
+		_rightRenderer->GetCamera()->SetPosition(_rightRenderer->GetCamera()->GetPosition() - cameraSpeed * _rightRenderer->GetCamera()->GetFront());
+	}
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+		_leftRenderer->GetCamera()->SetPosition(_leftRenderer->GetCamera()->GetPosition() - cameraSpeed * _leftRenderer->GetCamera()->GetCameraRight());
+		_rightRenderer->GetCamera()->SetPosition(_rightRenderer->GetCamera()->GetPosition() - cameraSpeed * _rightRenderer->GetCamera()->GetCameraRight());
+	}
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+	{
+		_leftRenderer->GetCamera()->SetPosition(_leftRenderer->GetCamera()->GetPosition() + cameraSpeed * _leftRenderer->GetCamera()->GetCameraRight());
+		_rightRenderer->GetCamera()->SetPosition(_rightRenderer->GetCamera()->GetPosition() + cameraSpeed * _rightRenderer->GetCamera()->GetCameraRight());
+	}
+	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) 
+	{
+		_leftRenderer->GetCamera()->SetPosition(_leftRenderer->GetCamera()->GetPosition() + glm::vec3(0.0f, cameraSpeed, 0.0f));
+		_rightRenderer->GetCamera()->SetPosition(_rightRenderer->GetCamera()->GetPosition() + glm::vec3(0.0f, cameraSpeed, 0.0f));
+	}
+	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+	{
+		_leftRenderer->GetCamera()->SetPosition(_leftRenderer->GetCamera()->GetPosition() - glm::vec3(0.0f, cameraSpeed, 0.0f));
+		_rightRenderer->GetCamera()->SetPosition(_rightRenderer->GetCamera()->GetPosition() - glm::vec3(0.0f, cameraSpeed, 0.0f));
+	}
+}
+
+void stereorizer::core::Window::OnMouseMove(double xpos, double ypos)
+{
+	if (firstMouse) // initially set to true
+	{
+		lastX = (float)xpos;
+		lastY = (float)ypos;
+		firstMouse = false;
+	}
+
+	// Always update last position to prevent large jumps
+	float xoffset = (float)xpos - lastX;
+	float yoffset = lastY - (float)ypos; // reversed since y-coordinates range from bottom to top
+	lastX = (float)xpos;
+	lastY = (float)ypos;
+
+	if (glfwGetMouseButton(_window.get(), GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
+	{
+		const float sensitivity = 0.1f;
+		xoffset *= sensitivity;
+		yoffset *= sensitivity;
+
+		_leftRenderer->GetCamera()->SetYaw(_leftRenderer->GetCamera()->GetYaw() + xoffset);
+		_leftRenderer->GetCamera()->SetPitch(_leftRenderer->GetCamera()->GetPitch() + yoffset);
+
+		_rightRenderer->GetCamera()->SetYaw(_rightRenderer->GetCamera()->GetYaw() + xoffset);
+		_rightRenderer->GetCamera()->SetPitch(_rightRenderer->GetCamera()->GetPitch() + yoffset);
+	}
+}
+
+void stereorizer::core::Window::mouse_callback(GLFWwindow* window, double xpos, double ypos)
+{
+	Window* app = static_cast<Window*>(glfwGetWindowUserPointer(window));
+	app->OnMouseMove(xpos, ypos);
 }

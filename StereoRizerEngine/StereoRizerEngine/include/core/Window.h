@@ -61,6 +61,15 @@ namespace stereorizer::core
 		void Create();
 		bool _xrInitialized = false;
 
+		float deltaTime = 0.0f;
+		float currentFrame = 0.0f;
+		float lastFrame = 0.0f;
+		void processInput(GLFWwindow* window);
+		void OnMouseMove(double xpos, double ypos);
+		static void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+		bool firstMouse = true;
+		float lastX = 0, lastY = 0;
+
 		stereorizer::xr::OpenXRSupport _xrSupport;
 		GraphicsAPI_Type m_apiType = GraphicsAPI_Type::OpenGL;
 	};
