@@ -193,37 +193,41 @@ void Window::Create()
 
 void stereorizer::core::Window::processInput(GLFWwindow* window)
 {
+	std::vector<stereorizer::graphics::Renderer*> renderers = {
+		_leftRenderer.get(),
+		_rightRenderer.get()
+	};
+
+	auto moveCameras = [&](const glm::vec3& offset) {
+		for (auto* renderer : renderers) {
+			auto camera = renderer->GetCamera();
+			camera->SetPosition(camera->GetPosition() + offset);
+		}
+		};
+
+	const float cameraSpeed = 2.5f * deltaTime;
+
+	// Exit
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 
-	const float cameraSpeed = 2.5f * deltaTime;
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-		_leftRenderer->GetCamera()->SetPosition(_leftRenderer->GetCamera()->GetPosition() + cameraSpeed * _leftRenderer->GetCamera()->GetFront());
-		_rightRenderer->GetCamera()->SetPosition(_rightRenderer->GetCamera()->GetPosition() + cameraSpeed * _rightRenderer->GetCamera()->GetFront());
-	}
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-		_leftRenderer->GetCamera()->SetPosition(_leftRenderer->GetCamera()->GetPosition() - cameraSpeed * _leftRenderer->GetCamera()->GetFront());
-		_rightRenderer->GetCamera()->SetPosition(_rightRenderer->GetCamera()->GetPosition() - cameraSpeed * _rightRenderer->GetCamera()->GetFront());
-	}
-	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-		_leftRenderer->GetCamera()->SetPosition(_leftRenderer->GetCamera()->GetPosition() - cameraSpeed * _leftRenderer->GetCamera()->GetCameraRight());
-		_rightRenderer->GetCamera()->SetPosition(_rightRenderer->GetCamera()->GetPosition() - cameraSpeed * _rightRenderer->GetCamera()->GetCameraRight());
-	}
+	// Forward / Backward
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+		moveCameras(cameraSpeed * _leftRenderer->GetCamera()->GetFront());
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+		moveCameras(-cameraSpeed * _leftRenderer->GetCamera()->GetFront());
+
+	// Left / Right
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+		moveCameras(-cameraSpeed * _leftRenderer->GetCamera()->GetCameraRight());
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-	{
-		_leftRenderer->GetCamera()->SetPosition(_leftRenderer->GetCamera()->GetPosition() + cameraSpeed * _leftRenderer->GetCamera()->GetCameraRight());
-		_rightRenderer->GetCamera()->SetPosition(_rightRenderer->GetCamera()->GetPosition() + cameraSpeed * _rightRenderer->GetCamera()->GetCameraRight());
-	}
-	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) 
-	{
-		_leftRenderer->GetCamera()->SetPosition(_leftRenderer->GetCamera()->GetPosition() + glm::vec3(0.0f, cameraSpeed, 0.0f));
-		_rightRenderer->GetCamera()->SetPosition(_rightRenderer->GetCamera()->GetPosition() + glm::vec3(0.0f, cameraSpeed, 0.0f));
-	}
+		moveCameras(cameraSpeed * _leftRenderer->GetCamera()->GetCameraRight());
+
+	// Up / Down
+	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+		moveCameras(glm::vec3(0.0f, cameraSpeed, 0.0f));
 	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
-	{
-		_leftRenderer->GetCamera()->SetPosition(_leftRenderer->GetCamera()->GetPosition() - glm::vec3(0.0f, cameraSpeed, 0.0f));
-		_rightRenderer->GetCamera()->SetPosition(_rightRenderer->GetCamera()->GetPosition() - glm::vec3(0.0f, cameraSpeed, 0.0f));
-	}
+		moveCameras(glm::vec3(0.0f, -cameraSpeed, 0.0f));
 }
 
 void stereorizer::core::Window::OnMouseMove(double xpos, double ypos)
@@ -247,11 +251,15 @@ void stereorizer::core::Window::OnMouseMove(double xpos, double ypos)
 		xoffset *= sensitivity;
 		yoffset *= sensitivity;
 
-		_leftRenderer->GetCamera()->SetYaw(_leftRenderer->GetCamera()->GetYaw() + xoffset);
-		_leftRenderer->GetCamera()->SetPitch(_leftRenderer->GetCamera()->GetPitch() + yoffset);
+		std::vector<stereorizer::graphics::Camera*> cameras = {
+			_leftRenderer->GetCamera().get(),
+			_rightRenderer->GetCamera().get()
+		};
 
-		_rightRenderer->GetCamera()->SetYaw(_rightRenderer->GetCamera()->GetYaw() + xoffset);
-		_rightRenderer->GetCamera()->SetPitch(_rightRenderer->GetCamera()->GetPitch() + yoffset);
+		for (auto* cam : cameras) {
+			cam->SetYaw(cam->GetYaw() + xoffset);
+			cam->SetPitch(cam->GetPitch() + yoffset);
+		}
 	}
 }
 
