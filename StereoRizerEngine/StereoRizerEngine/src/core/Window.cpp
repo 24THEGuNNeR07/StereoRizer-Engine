@@ -121,6 +121,8 @@ void Window::Run()
 		glfwMakeContextCurrent(_window.get()); // force same context before every frame
 
 		glfwGetFramebufferSize(_window.get(), &_width, &_height);
+
+		LOG_INFO("Window size: " + std::to_string(_width) + "x" + std::to_string(_height));
         
 		if (_xrInitialized)
 			_xrSupport.SetFrameSize(_width, _height);
@@ -189,6 +191,12 @@ void Window::Create()
 
 	// Now create OpenXR session, passing this context in graphics binding
 	_xrInitialized = _xrSupport.Init(m_apiType);
+	if (_xrInitialized)
+	{
+		auto [recommendedWidth, recommendedHeight] = _xrSupport.GetRecommendedTargetSize();
+		_width = static_cast<int>(recommendedWidth);
+		_height = static_cast<int>(recommendedHeight);
+	}
 }
 
 void stereorizer::core::Window::processInput(GLFWwindow* window)

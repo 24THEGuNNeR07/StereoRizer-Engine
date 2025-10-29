@@ -66,6 +66,8 @@ namespace stereorizer::xr
 
         void EndLoop();
 
+		std::tuple<uint32_t, uint32_t> GetRecommendedTargetSize() const { return _recommendedTargetSize; }
+
     private:
         // OpenXR state
         XrInstance xrInstance{ XR_NULL_HANDLE };
@@ -93,7 +95,8 @@ namespace stereorizer::xr
         HDC xrSessionDC = nullptr;
 
         // internal helpers
-        void CreateXRSwapchains();
+        std::tuple<uint32_t, uint32_t> CreateXRSwapchains();
+        std::tuple<uint32_t, uint32_t> _recommendedTargetSize;
 
         XrFrameState frameState{ XR_TYPE_FRAME_STATE };
 

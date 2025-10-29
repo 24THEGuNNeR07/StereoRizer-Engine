@@ -153,7 +153,7 @@ bool OpenXRSupport::Init(GraphicsAPI_Type apiType)
 		return false;
 	}
 
-	CreateXRSwapchains();
+	_recommendedTargetSize = CreateXRSwapchains();
 
 	return true;
 }
@@ -312,7 +312,7 @@ void OpenXRSupport::BeginFrame()
 	}
 }
 
-void OpenXRSupport::CreateXRSwapchains()
+std::tuple<uint32_t, uint32_t> OpenXRSupport::CreateXRSwapchains()
 {
 	uint32_t viewCountOutput;
 
@@ -327,7 +327,7 @@ void OpenXRSupport::CreateXRSwapchains()
 
 	if (XR_FAILED(result)) {
 		LOG_ERROR(std::string("First xrEnumerateViewConfigurationViews failed: ") + std::to_string((int)result));
-		return;
+		return std::make_tuple(0, 0);
 	}
 
 	std::vector<XrViewConfigurationView> configViews(
@@ -344,7 +344,7 @@ void OpenXRSupport::CreateXRSwapchains()
 
 	if (XR_FAILED(result)) {
 		LOG_ERROR(std::string("Second xrEnumerateViewConfigurationViews failed: ") + std::to_string((int)result));
-		return;
+		return std::make_tuple(0, 0);
 	}
 
 	for (uint32_t i = 0; i < viewCountOutput; i++) {
@@ -374,7 +374,21 @@ void OpenXRSupport::CreateXRSwapchains()
 			reinterpret_cast<XrSwapchainImageBaseHeader*>(_swapchains[i].images.data()));
 	}
 
+	uint32_t recommendedWidth = 0;
+	uint32_t recommendedHeight = 0;
+
+	for (uint32_t i = 0; i < 2; i++) {
+		recommendedWidth = std::max(recommendedWidth, configViews[i].recommendedImageRectWidth);
+		recommendedHeight = std::max(recommendedHeight, configViews[i].recommendedImageRectHeight);
+	}
+
+	LOG_INFO("Recommended VR render target size: "
+		+ std::to_string(recommendedWidth) + "x"
+		+ std::to_string(recommendedHeight));
+
 	LOG_INFO("Swapchains created for both eyes.");
+
+	return std::make_tuple(recommendedWidth, recommendedHeight);
 }
 
 void OpenXRSupport::LocateViews()
