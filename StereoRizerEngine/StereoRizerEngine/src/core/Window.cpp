@@ -194,8 +194,9 @@ void Window::Create()
 	if (_xrInitialized)
 	{
 		auto [recommendedWidth, recommendedHeight] = _xrSupport.GetRecommendedTargetSize();
-		_width = static_cast<int>(recommendedWidth);
+		_width = static_cast<int>(recommendedWidth) * 2;
 		_height = static_cast<int>(recommendedHeight);
+		glfwSetWindowSize(_window.get(), _width, _height);
 	}
 }
 

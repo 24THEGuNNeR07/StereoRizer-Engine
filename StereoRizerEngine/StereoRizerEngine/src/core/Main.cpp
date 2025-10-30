@@ -8,7 +8,7 @@
 
 int main()
 {
-    stereorizer::core::Window window(800, 600, "StereoRizer Engine");
+    stereorizer::core::Window window(1832 * 2, 1920, "StereoRizer Engine");
 
 	std::shared_ptr<stereorizer::graphics::Mesh> mesh = std::make_shared<stereorizer::graphics::Mesh>("../models/Suzanne.obj");
 	std::shared_ptr<stereorizer::graphics::Shader> shader = std::make_shared<stereorizer::graphics::Shader>("resources/shaders/Phong.shader");
