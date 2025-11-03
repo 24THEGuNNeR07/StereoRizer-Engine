@@ -11,7 +11,7 @@ Renderer::~Renderer() = default;
 
 std::shared_ptr<Camera> Renderer::GetCamera() {
 	if (!_camera)
-		_camera = std::make_unique<Camera>(45.0f, 4.0f / 3.0f, 0.1f, 100.0f);
+		_camera = std::make_shared<Camera>(45.0f, 4.0f / 3.0f, 0.1f, 100.0f);
 	return _camera;
 }
 

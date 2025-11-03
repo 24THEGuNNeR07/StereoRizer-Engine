@@ -45,6 +45,10 @@ namespace stereorizer::core
 		int GetWidth() const;
 		int GetHeight() const;
 
+		// IPD accessors
+		float GetIPD() const;
+		void SetIPD(float ipd);
+
 	private:
 		int _width;
 		int _height;
@@ -59,7 +63,10 @@ namespace stereorizer::core
 		void RenderModelsLeft();
 		void RenderModelsRight();
 		void Create();
+
 		bool _xrInitialized = false;
+		// Inter-pupillary distance in meters (default 64mm)
+		float _ipd = 0.064f;
 
 		float deltaTime = 0.0f;
 		float currentFrame = 0.0f;

@@ -4,6 +4,8 @@
 #include "core/Common.h"
 #include "graphics/Renderer.h"
 #include "xr/OpenXRSupport.h"
+#include <glm/glm.hpp>
+#include <cmath>
 
 using namespace stereorizer::core;
 using namespace stereorizer::graphics;
@@ -18,6 +20,44 @@ Window::Window(int width, int height, const char* title)
 	Create();
 	_leftRenderer = std::make_unique<Renderer>();
 	_rightRenderer = std::make_unique<Renderer>();
+
+	// Position the stereo camera pair using IPD (left/right offset around origin)
+	// Calculate middle look-at point and set both cameras to look at it
+	{
+		auto leftCam = _leftRenderer->GetCamera();
+		auto rightCam = _rightRenderer->GetCamera();
+		if (leftCam && rightCam) {
+			float half = _ipd / 2.0f;
+			glm::vec3 center = leftCam->GetPosition();
+			
+			// Calculate middle look-at point based on current camera front direction
+			glm::vec3 lookAtDistance = leftCam->GetFront() * 10.0f; // 10 units forward
+			glm::vec3 middleLookAt = center + lookAtDistance;
+			
+			// Position cameras with IPD offset
+			glm::vec3 leftPos = center + glm::vec3(-half, 0.0f, 0.0f);
+			glm::vec3 rightPos = center + glm::vec3(half, 0.0f, 0.0f);
+			
+			leftCam->SetPosition(leftPos);
+			rightCam->SetPosition(rightPos);
+			
+			// Calculate orientations based on look-at point
+			glm::vec3 leftDir = glm::normalize(middleLookAt - leftPos);
+			glm::vec3 rightDir = glm::normalize(middleLookAt - rightPos);
+			
+			// Convert direction vectors to yaw/pitch angles
+			float leftYaw = glm::degrees(atan2(leftDir.z, leftDir.x));
+			float leftPitch = glm::degrees(asin(leftDir.y));
+			float rightYaw = glm::degrees(atan2(rightDir.z, rightDir.x));
+			float rightPitch = glm::degrees(asin(rightDir.y));
+			
+			leftCam->SetYaw(leftYaw);
+			leftCam->SetPitch(leftPitch);
+			rightCam->SetYaw(rightYaw);
+			rightCam->SetPitch(rightPitch);
+		}
+	}
+	
 }
 
 Window::~Window()
@@ -121,8 +161,6 @@ void Window::Run()
 		glfwMakeContextCurrent(_window.get()); // force same context before every frame
 
 		glfwGetFramebufferSize(_window.get(), &_width, &_height);
-
-		LOG_INFO("Window size: " + std::to_string(_width) + "x" + std::to_string(_height));
         
 		if (_xrInitialized)
 			_xrSupport.SetFrameSize(_width, _height);
@@ -276,4 +314,45 @@ void stereorizer::core::Window::mouse_callback(GLFWwindow* window, double xpos, 
 {
 	Window* app = static_cast<Window*>(glfwGetWindowUserPointer(window));
 	app->OnMouseMove(xpos, ypos);
+}
+
+float Window::GetIPD() const {
+	return _ipd;
+}
+
+void Window::SetIPD(float ipd) {
+	_ipd = ipd;
+	// Reposition cameras around the current center position and recalculate orientations
+	if (_leftRenderer && _rightRenderer) {
+		auto leftCam = _leftRenderer->GetCamera();
+		auto rightCam = _rightRenderer->GetCamera();
+		if (leftCam && rightCam) {
+			// Calculate current center position and look-at point
+			glm::vec3 center = (leftCam->GetPosition() + rightCam->GetPosition()) * 0.5f;
+			glm::vec3 averageDir = glm::normalize((leftCam->GetFront() + rightCam->GetFront()) * 0.5f);
+			glm::vec3 middleLookAt = center + averageDir * 10.0f;
+			
+			float half = _ipd / 2.0f;
+			glm::vec3 leftPos = center + glm::vec3(-half, 0.0f, 0.0f);
+			glm::vec3 rightPos = center + glm::vec3(half, 0.0f, 0.0f);
+			
+			leftCam->SetPosition(leftPos);
+			rightCam->SetPosition(rightPos);
+			
+			// Calculate new orientations based on middle look-at point
+			glm::vec3 leftDir = glm::normalize(middleLookAt - leftPos);
+			glm::vec3 rightDir = glm::normalize(middleLookAt - rightPos);
+			
+			// Convert direction vectors to yaw/pitch angles
+			float leftYaw = glm::degrees(atan2(leftDir.z, leftDir.x));
+			float leftPitch = glm::degrees(asin(leftDir.y));
+			float rightYaw = glm::degrees(atan2(rightDir.z, rightDir.x));
+			float rightPitch = glm::degrees(asin(rightDir.y));
+			
+			leftCam->SetYaw(leftYaw);
+			leftCam->SetPitch(leftPitch);
+			rightCam->SetYaw(rightYaw);
+			rightCam->SetPitch(rightPitch);
+		}
+	}
 }
