@@ -64,10 +64,10 @@ namespace stereorizer::core
 		std::unique_ptr<stereorizer::graphics::Renderer> _leftRenderer;
 		std::unique_ptr<stereorizer::graphics::Renderer> _rightRenderer;
 		std::vector<std::shared_ptr<stereorizer::graphics::Model>> _models;
-		void UpdateXRViews();
+		bool UpdateXRViews();
 		void RenderModelsLeft();
 		void RenderModelsRight();
-		void Create();
+		void InitResources();
 		void RenderImGui();
 		void handleMouseInput();
 

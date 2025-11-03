@@ -15,9 +15,11 @@ Window::Window(int width, int height, const char* title)
 	_width = width;
 	_height = height;
 	_title = title;
+
 	// initialize unique_ptr with nullptr and custom deleter
 	_window = std::unique_ptr<GLFWwindow, std::function<void(GLFWwindow*)>>(nullptr, [](GLFWwindow* w){ if (w) glfwDestroyWindow(w); });
-	Create();
+
+	InitResources();
 	_leftRenderer = std::make_unique<Renderer>();
 	_rightRenderer = std::make_unique<Renderer>();
 
@@ -30,22 +32,18 @@ Window::Window(int width, int height, const char* title)
 			float half = _ipd / 2.0f;
 			glm::vec3 center = leftCam->GetPosition();
 			
-			// Calculate middle look-at point based on current camera front direction
-			glm::vec3 lookAtDistance = leftCam->GetFront() * 10.0f; // 10 units forward
+			glm::vec3 lookAtDistance = leftCam->GetFront() * 10.0f;
 			glm::vec3 middleLookAt = center + lookAtDistance;
 			
-			// Position cameras with IPD offset
 			glm::vec3 leftPos = center + glm::vec3(-half, 0.0f, 0.0f);
 			glm::vec3 rightPos = center + glm::vec3(half, 0.0f, 0.0f);
 			
 			leftCam->SetPosition(leftPos);
 			rightCam->SetPosition(rightPos);
 			
-			// Calculate orientations based on look-at point
 			glm::vec3 leftDir = glm::normalize(middleLookAt - leftPos);
 			glm::vec3 rightDir = glm::normalize(middleLookAt - rightPos);
 			
-			// Convert direction vectors to yaw/pitch angles
 			float leftYaw = glm::degrees(atan2(leftDir.z, leftDir.x));
 			float leftPitch = glm::degrees(asin(leftDir.y));
 			float rightYaw = glm::degrees(atan2(rightDir.z, rightDir.x));
@@ -57,7 +55,6 @@ Window::Window(int width, int height, const char* title)
 			rightCam->SetPitch(rightPitch);
 		}
 	}
-	
 }
 
 Window::~Window()
@@ -69,12 +66,10 @@ void Window::Destroy()
 {
 	if (_window)
 	{
-		// Cleanup ImGui
 		ImGui_ImplOpenGL3_Shutdown();
 		ImGui_ImplGlfw_Shutdown();
 		ImGui::DestroyContext();
 
-		// unique_ptr custom deleter will call glfwDestroyWindow
 		_window.reset();
 		glfwTerminate();
 	}
@@ -105,27 +100,38 @@ void Window::RemoveModel(std::shared_ptr<Model> model)
 		_models.erase(it);
 }
 
-void Window::UpdateXRViews()
+bool Window::UpdateXRViews()
 {
 	if (!_xrInitialized)
-		return;
+		return false;
 
 	_xrSupport.PollEvents();
-	_xrSupport.WaitFrame();
-	_xrSupport.BeginFrame();
-	_xrSupport.LocateViews();
+	if (_xrInitialized)
+		_xrInitialized = _xrSupport.WaitFrame();
+	else
+		return false;
 
-	// Update left camera
+	if (_xrInitialized)
+		_xrInitialized = _xrSupport.BeginFrame();
+	else
+		return false;
+
+	if (_xrInitialized)
+		_xrInitialized = _xrSupport.LocateViews();
+	else
+		return false;
+
 	glm::mat4 leftView = _xrSupport.ConvertXrPoseToMat4(0);
 	glm::mat4 leftProj = _xrSupport.ConvertXrFovToProj(0, 0.1f, 100.0f);
 	_leftRenderer->GetCamera()->SetViewMatrix(leftView);
 	_leftRenderer->GetCamera()->SetProjectionMatrix(leftProj);
 
-	// Update right camera
 	glm::mat4 rightView = _xrSupport.ConvertXrPoseToMat4(1);
 	glm::mat4 rightProj = _xrSupport.ConvertXrFovToProj(1, 0.1f, 100.0f);
 	_rightRenderer->GetCamera()->SetViewMatrix(rightView);
 	_rightRenderer->GetCamera()->SetProjectionMatrix(rightProj);
+
+	return true;
 }
 
 void Window::RenderModelsLeft()
@@ -151,7 +157,7 @@ void Window::RenderModelsRight()
 void Window::Run()
 {
 	if (_xrInitialized)
-		_xrSupport.InitLoop(_width, _height);
+		_xrSupport.InitCopyFrameBuffer(_width, _height);
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -163,20 +169,19 @@ void Window::Run()
 
 		PollEvents();
 
-		glfwMakeContextCurrent(_window.get()); // force same context before every frame
+		glfwMakeContextCurrent(_window.get());
 
 		glfwGetFramebufferSize(_window.get(), &_width, &_height);
-        
+
 		if (_xrInitialized)
 			_xrSupport.SetFrameSize(_width, _height);
 
-		// Clear window backbuffer (we render the app into backbuffer halves)
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glViewport(0, 0, _width, _height);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		if (_xrInitialized)
-			UpdateXRViews();
+			_xrInitialized = UpdateXRViews();
 		else {
 			processInput(_window.get());
 			handleMouseInput();
@@ -188,23 +193,20 @@ void Window::Run()
 		glViewport(_width / 2, 0, _width / 2, _height);
 		RenderModelsRight();
 
-		// Ensure all draws are finished into backbuffer before we read from it
-		// (glFlush should be sufficient usually; use glFinish for debugging)
 		glFlush();
 
-		// Render ImGui overlay on top
-		glViewport(0, 0, _width, _height);
-		RenderImGui();
+		if (!_xrInitialized)
+		{
+			glViewport(0, 0, _width, _height);
+			RenderImGui();
+		}
 
 		if (_xrInitialized)
-			_xrSupport.CopyFrameBuffer();
+			_xrInitialized = _xrSupport.CopyFrameBuffer();
         
 		SwapBuffers();
+	}
 
-		
-	} // end while
-
-	// cleanup dstFbo
 	if (_xrInitialized)
 		_xrSupport.EndLoop();
 }
@@ -219,7 +221,7 @@ int Window::GetHeight() const
 	return _height;
 }
 
-void Window::Create()
+void Window::InitResources()
 {
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -239,7 +241,6 @@ void Window::Create()
 	ImGui::StyleColorsDark();
 	glfwSetWindowUserPointer(_window.get(), this);
 	
-	// Initialize ImGui backends - let ImGui install its callbacks
 	ImGui_ImplGlfw_InitForOpenGL(_window.get(), true);
 	ImGui_ImplOpenGL3_Init("#version 450");
 
@@ -247,13 +248,8 @@ void Window::Create()
 	int tex_w, tex_h;
 	io.Fonts->GetTexDataAsRGBA32(&tex_pixels, &tex_w, &tex_h);
 
-	// Note: Don't set custom callbacks after ImGui backends - they override ImGui's callbacks
-	// ImGui will handle mouse input and we check io.WantCaptureMouse in our input handling
-
-	// DEBUG: Check GPU
 	LOG_INFO(std::string("GL Renderer: ") + reinterpret_cast<const char*>(glGetString(GL_RENDERER)));
 
-	// Now create OpenXR session, passing this context in graphics binding
 	_xrInitialized = _xrSupport.Init(m_apiType);
 	if (_xrInitialized)
 	{
@@ -266,10 +262,9 @@ void Window::Create()
 
 void stereorizer::core::Window::processInput(GLFWwindow* window)
 {
-	// Check if ImGui wants to capture keyboard input
 	ImGuiIO& io = ImGui::GetIO();
 	if (io.WantCaptureKeyboard) {
-		return; // Let ImGui handle the keyboard
+		return;
 	}
 
 	std::vector<stereorizer::graphics::Renderer*> renderers = {
@@ -286,23 +281,19 @@ void stereorizer::core::Window::processInput(GLFWwindow* window)
 
 	const float cameraSpeed = 2.5f * deltaTime;
 
-	// Exit
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
 
-	// Forward / Backward
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 		moveCameras(cameraSpeed * _leftRenderer->GetCamera()->GetFront());
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
 		moveCameras(-cameraSpeed * _leftRenderer->GetCamera()->GetFront());
 
-	// Left / Right
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
 		moveCameras(-cameraSpeed * _leftRenderer->GetCamera()->GetCameraRight());
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 		moveCameras(cameraSpeed * _leftRenderer->GetCamera()->GetCameraRight());
 
-	// Up / Down
 	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
 		moveCameras(glm::vec3(0.0f, cameraSpeed, 0.0f));
 	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
@@ -311,22 +302,20 @@ void stereorizer::core::Window::processInput(GLFWwindow* window)
 
 void stereorizer::core::Window::OnMouseMove(double xpos, double ypos)
 {
-	// Check if ImGui wants to capture mouse input
 	ImGuiIO& io = ImGui::GetIO();
 	if (io.WantCaptureMouse) {
-		return; // Let ImGui handle the mouse
+		return;
 	}
 
-	if (firstMouse) // initially set to true
+	if (firstMouse)
 	{
 		lastX = (float)xpos;
 		lastY = (float)ypos;
 		firstMouse = false;
 	}
 
-	// Always update last position to prevent large jumps
 	float xoffset = (float)xpos - lastX;
-	float yoffset = lastY - (float)ypos; // reversed since y-coordinates range from bottom to top
+	float yoffset = lastY - (float)ypos;
 	lastX = (float)xpos;
 	lastY = (float)ypos;
 
@@ -365,7 +354,6 @@ void Window::SetIPD(float ipd) {
 		auto leftCam = _leftRenderer->GetCamera();
 		auto rightCam = _rightRenderer->GetCamera();
 		if (leftCam && rightCam) {
-			// Calculate current center position and look-at point
 			glm::vec3 center = (leftCam->GetPosition() + rightCam->GetPosition()) * 0.5f;
 			glm::vec3 averageDir = glm::normalize((leftCam->GetFront() + rightCam->GetFront()) * 0.5f);
 			glm::vec3 middleLookAt = center + averageDir * 10.0f;
@@ -377,11 +365,9 @@ void Window::SetIPD(float ipd) {
 			leftCam->SetPosition(leftPos);
 			rightCam->SetPosition(rightPos);
 			
-			// Calculate new orientations based on middle look-at point
 			glm::vec3 leftDir = glm::normalize(middleLookAt - leftPos);
 			glm::vec3 rightDir = glm::normalize(middleLookAt - rightPos);
 			
-			// Convert direction vectors to yaw/pitch angles
 			float leftYaw = glm::degrees(atan2(leftDir.z, leftDir.x));
 			float leftPitch = glm::degrees(asin(leftDir.y));
 			float rightYaw = glm::degrees(atan2(rightDir.z, rightDir.x));
@@ -396,50 +382,38 @@ void Window::SetIPD(float ipd) {
 }
 
 void stereorizer::core::Window::RenderImGui() {
-	// Note: This assumes you have ImGui backends initialized
-	// You may need to add: ImGui_ImplOpenGL3_NewFrame(); and ImGui_ImplGlfw_NewFrame();
-	
-	// Start the Dear ImGui frame
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 	
-	// Set initial window position (only on first use)
 	ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_FirstUseEver);
 	ImGui::SetNextWindowSize(ImVec2(300, 150), ImGuiCond_FirstUseEver);
 	
-	// Create IPD adjustment window (moveable and resizable)
 	ImGui::Begin("Stereo Settings");
 	
-	// IPD slider with range 0.05 to 0.2 meters (50mm to 200mm)
 	float currentIPD = GetIPD();
 	if (ImGui::SliderFloat("IPD (meters)", &currentIPD, 0.05f, 0.2f, "%.3f")) {
 		SetIPD(currentIPD);
 	}
 	
-	// Show IPD in millimeters for convenience
 	ImGui::Text("IPD: %.1f mm", currentIPD * 1000.0f);
 	
-	// Add some helpful info
 	ImGui::Separator();
 	ImGui::Text("Inter-Pupillary Distance");
 	ImGui::TextWrapped("Adjust the distance between the left and right eye cameras for comfortable stereo viewing.");
 	
 	ImGui::End();
 
-	// Render
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
 void stereorizer::core::Window::handleMouseInput() {
-	// Check if ImGui wants to capture mouse input
 	ImGuiIO& io = ImGui::GetIO();
 	if (io.WantCaptureMouse) {
-		return; // Let ImGui handle the mouse
+		return;
 	}
 
-	// Get current mouse position
 	double xpos, ypos;
 	glfwGetCursorPos(_window.get(), &xpos, &ypos);
 

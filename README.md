@@ -6,6 +6,13 @@ A research-oriented 3D engine focused on exploring various stereo rendering tech
 
 StereoRizer Engine is designed to be a testbed for stereo rendering research, allowing easy implementation and comparison of different rendering techniques. The engine supports basic 3D model loading and OpenXR integration, making it suitable for VR development and research.
 
+![StereoRizer Engine](screens/rizer.png)
+
+## Controls
+
+- **WASD** - Camera movement (Forward/Left/Backward/Right)
+- **Mouse** - Camera orientation/look around
+
 ## Getting Started
 
 ### Prerequisites

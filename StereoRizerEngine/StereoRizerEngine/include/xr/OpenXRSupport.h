@@ -45,24 +45,28 @@ namespace stereorizer::xr
         glm::mat4 ConvertXrFovToProj(int eyeIndex, float nearZ, float farZ);
 
         bool CopyFramebufferToSwapchain(GLuint srcFbo,
-            GLint srcX, GLint srcY, GLsizei srcW, GLsizei srcH,
-            XrSwapchainData& swapchain, uint32_t imageIndex,
-            GLuint dstFboReuse);
+                                        GLint srcX, 
+                                        GLint srcY, 
+                                        GLsizei srcW, 
+                                        GLsizei srcH,
+                                        XrSwapchainData& swapchain, 
+                                        uint32_t imageIndex,
+                                        GLuint dstFboReuse);
 
         // accessors
         XrSession GetSession() const { return xrSession; }
         XrSpace GetAppSpace() const { return xrAppSpace; }
         XrSwapchainData* GetSwapchains() { return _swapchains; }
 
-        void InitLoop(int width, int height);
+        void InitCopyFrameBuffer(int width, int height);
 
-        void WaitFrame();
-        void BeginFrame();
-        void LocateViews();
+        bool WaitFrame();
+        bool BeginFrame();
+        bool LocateViews();
 
         void SetFrameSize(int width, int height);
 
-        void CopyFrameBuffer();
+        bool CopyFrameBuffer();
 
         void EndLoop();
 

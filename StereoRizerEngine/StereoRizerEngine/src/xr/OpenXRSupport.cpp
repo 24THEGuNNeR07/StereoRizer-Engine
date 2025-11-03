@@ -282,7 +282,7 @@ bool OpenXRSupport::CopyFramebufferToSwapchain(GLuint srcFbo,
 	return true;
 }
 
-void OpenXRSupport::InitLoop(int width, int height)
+void OpenXRSupport::InitCopyFrameBuffer(int width, int height)
 {
 	// persistent dstFbo (create once)
 	xrDstFbo = 0;
@@ -293,23 +293,29 @@ void OpenXRSupport::InitLoop(int width, int height)
 	int srcHeight = height;
 }
 
-void OpenXRSupport::WaitFrame()
+bool OpenXRSupport::WaitFrame()
 {
 	XrResult res;
 	
 	res = xrWaitFrame(xrSession, nullptr, &frameState);
 	if (XR_FAILED(res)) {
 		LOG_ERROR(std::string("xrWaitFrame failed: ") + std::to_string((int)res));
+		return false;
 	}
+	else
+		return true;
 }
 
-void OpenXRSupport::BeginFrame()
+bool OpenXRSupport::BeginFrame()
 {
 	XrResult res;
 	res = xrBeginFrame(xrSession, nullptr);
 	if (XR_FAILED(res)) {
 		LOG_ERROR(std::string("xrBeginFrame failed: ") + std::to_string((int)res));
+		return false;
 	}
+	else
+		return true;
 }
 
 std::tuple<uint32_t, uint32_t> OpenXRSupport::CreateXRSwapchains()
@@ -391,7 +397,7 @@ std::tuple<uint32_t, uint32_t> OpenXRSupport::CreateXRSwapchains()
 	return std::make_tuple(recommendedWidth, recommendedHeight);
 }
 
-void OpenXRSupport::LocateViews()
+bool OpenXRSupport::LocateViews()
 {
 	XrResult res;
 
@@ -403,7 +409,10 @@ void OpenXRSupport::LocateViews()
 	res = xrLocateViews(xrSession, &locateInfo, &viewState, 2, &viewCountOutput, views);
 	if (XR_FAILED(res) || viewCountOutput < 2) {
 		LOG_ERROR(std::string("xrLocateViews failed or returned <2 views: ") + std::to_string((int)res) + ", count=" + std::to_string((int)viewCountOutput));
+		return false;
 	}
+	else
+		return true;
 }
 
 void OpenXRSupport::SetFrameSize(int width, int height)
@@ -412,7 +421,7 @@ void OpenXRSupport::SetFrameSize(int width, int height)
 	srcHeight = height;
 }
 
-void OpenXRSupport::CopyFrameBuffer()
+bool OpenXRSupport::CopyFrameBuffer()
 {
 	XrResult res;
 
@@ -500,7 +509,10 @@ void OpenXRSupport::CopyFrameBuffer()
 	res = xrEndFrame(xrSession, &endInfo);
 	if (XR_FAILED(res)) {
 		LOG_ERROR(std::string("xrEndFrame failed: ") + std::to_string((int)res));
+		return false;
 	}
+	else
+		return true;
 }
 
 void OpenXRSupport::EndLoop()
