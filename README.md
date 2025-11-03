@@ -77,22 +77,10 @@ StereoRizerEngine/
 ## Planned Features and Improvements
 
 ### In Progress
-1. Model Loading Enhancements
-   - Fix missing normals in model loading
-   - Add proper normal generation
-   - Implement material system
-   - Add texture coordinate support
-
-2. Stereo Rendering Optimization
+1. Stereo Rendering Optimization
    - Primary eye selection functionality
    - Configurable secondary eye resolution
    - View-dependent rendering optimizations
-
-3. GUI Integration
-   - ImGui integration for runtime configuration
-   - Real-time parameter adjustment
-   - Performance metrics display
-   - Eye configuration controls
 
 ### Future Development
 - Implementation of various stereo rendering techniques
@@ -108,6 +96,15 @@ Contributions are welcome! To contribute:
 2. Create a feature branch
 3. Make your changes
 4. Submit a pull request
+
+## Contact
+
+Feel free to reach out if you're interested in collaborating on development or have questions about the project:
+
+- **Discord:** thegunner2407
+- **GitHub:** [24THEGuNNeR07](https://github.com/24THEGuNNeR07)
+
+I'm always open to discussing new ideas, features, or improvements. Whether you want to contribute code, suggest optimizations, or collaborate on research, don't hesitate to get in touch!
 
 ## License
 
