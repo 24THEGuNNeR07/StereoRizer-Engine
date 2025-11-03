@@ -69,6 +69,11 @@ void Window::Destroy()
 {
 	if (_window)
 	{
+		// Cleanup ImGui
+		ImGui_ImplOpenGL3_Shutdown();
+		ImGui_ImplGlfw_Shutdown();
+		ImGui::DestroyContext();
+
 		// unique_ptr custom deleter will call glfwDestroyWindow
 		_window.reset();
 		glfwTerminate();
@@ -172,8 +177,10 @@ void Window::Run()
 
 		if (_xrInitialized)
 			UpdateXRViews();
-		else
+		else {
 			processInput(_window.get());
+			handleMouseInput();
+		}
 
 		glViewport(0, 0, _width / 2, _height);
 		RenderModelsLeft();
@@ -184,6 +191,10 @@ void Window::Run()
 		// Ensure all draws are finished into backbuffer before we read from it
 		// (glFlush should be sufficient usually; use glFinish for debugging)
 		glFlush();
+
+		// Render ImGui overlay on top
+		glViewport(0, 0, _width, _height);
+		RenderImGui();
 
 		if (_xrInitialized)
 			_xrSupport.CopyFrameBuffer();
@@ -221,8 +232,23 @@ void Window::Create()
 	glfwMakeContextCurrent(_window.get());
 	glewInit();
 
+	// Setup Dear ImGui context
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	ImGui::StyleColorsDark();
 	glfwSetWindowUserPointer(_window.get(), this);
-	glfwSetCursorPosCallback(_window.get(), mouse_callback);
+	
+	// Initialize ImGui backends - let ImGui install its callbacks
+	ImGui_ImplGlfw_InitForOpenGL(_window.get(), true);
+	ImGui_ImplOpenGL3_Init("#version 450");
+
+	unsigned char* tex_pixels = nullptr;
+	int tex_w, tex_h;
+	io.Fonts->GetTexDataAsRGBA32(&tex_pixels, &tex_w, &tex_h);
+
+	// Note: Don't set custom callbacks after ImGui backends - they override ImGui's callbacks
+	// ImGui will handle mouse input and we check io.WantCaptureMouse in our input handling
 
 	// DEBUG: Check GPU
 	LOG_INFO(std::string("GL Renderer: ") + reinterpret_cast<const char*>(glGetString(GL_RENDERER)));
@@ -240,6 +266,12 @@ void Window::Create()
 
 void stereorizer::core::Window::processInput(GLFWwindow* window)
 {
+	// Check if ImGui wants to capture keyboard input
+	ImGuiIO& io = ImGui::GetIO();
+	if (io.WantCaptureKeyboard) {
+		return; // Let ImGui handle the keyboard
+	}
+
 	std::vector<stereorizer::graphics::Renderer*> renderers = {
 		_leftRenderer.get(),
 		_rightRenderer.get()
@@ -279,6 +311,12 @@ void stereorizer::core::Window::processInput(GLFWwindow* window)
 
 void stereorizer::core::Window::OnMouseMove(double xpos, double ypos)
 {
+	// Check if ImGui wants to capture mouse input
+	ImGuiIO& io = ImGui::GetIO();
+	if (io.WantCaptureMouse) {
+		return; // Let ImGui handle the mouse
+	}
+
 	if (firstMouse) // initially set to true
 	{
 		lastX = (float)xpos;
@@ -353,6 +391,82 @@ void Window::SetIPD(float ipd) {
 			leftCam->SetPitch(leftPitch);
 			rightCam->SetYaw(rightYaw);
 			rightCam->SetPitch(rightPitch);
+		}
+	}
+}
+
+void stereorizer::core::Window::RenderImGui() {
+	// Note: This assumes you have ImGui backends initialized
+	// You may need to add: ImGui_ImplOpenGL3_NewFrame(); and ImGui_ImplGlfw_NewFrame();
+	
+	// Start the Dear ImGui frame
+	ImGui_ImplOpenGL3_NewFrame();
+	ImGui_ImplGlfw_NewFrame();
+	ImGui::NewFrame();
+	
+	// Set initial window position (only on first use)
+	ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ImVec2(300, 150), ImGuiCond_FirstUseEver);
+	
+	// Create IPD adjustment window (moveable and resizable)
+	ImGui::Begin("Stereo Settings");
+	
+	// IPD slider with range 0.05 to 0.2 meters (50mm to 200mm)
+	float currentIPD = GetIPD();
+	if (ImGui::SliderFloat("IPD (meters)", &currentIPD, 0.05f, 0.2f, "%.3f")) {
+		SetIPD(currentIPD);
+	}
+	
+	// Show IPD in millimeters for convenience
+	ImGui::Text("IPD: %.1f mm", currentIPD * 1000.0f);
+	
+	// Add some helpful info
+	ImGui::Separator();
+	ImGui::Text("Inter-Pupillary Distance");
+	ImGui::TextWrapped("Adjust the distance between the left and right eye cameras for comfortable stereo viewing.");
+	
+	ImGui::End();
+
+	// Render
+	ImGui::Render();
+	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
+void stereorizer::core::Window::handleMouseInput() {
+	// Check if ImGui wants to capture mouse input
+	ImGuiIO& io = ImGui::GetIO();
+	if (io.WantCaptureMouse) {
+		return; // Let ImGui handle the mouse
+	}
+
+	// Get current mouse position
+	double xpos, ypos;
+	glfwGetCursorPos(_window.get(), &xpos, &ypos);
+
+	if (firstMouse) {
+		lastX = (float)xpos;
+		lastY = (float)ypos;
+		firstMouse = false;
+	}
+
+	float xoffset = (float)xpos - lastX;
+	float yoffset = lastY - (float)ypos;
+	lastX = (float)xpos;
+	lastY = (float)ypos;
+
+	if (glfwGetMouseButton(_window.get(), GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
+		const float sensitivity = 0.1f;
+		xoffset *= sensitivity;
+		yoffset *= sensitivity;
+
+		std::vector<stereorizer::graphics::Camera*> cameras = {
+			_leftRenderer->GetCamera().get(),
+			_rightRenderer->GetCamera().get()
+		};
+
+		for (auto* cam : cameras) {
+			cam->SetYaw(cam->GetYaw() + xoffset);
+			cam->SetPitch(cam->GetPitch() + yoffset);
 		}
 	}
 }

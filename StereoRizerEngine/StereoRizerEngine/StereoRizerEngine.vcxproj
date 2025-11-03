@@ -105,14 +105,14 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>include;..\external\glfw\include;..\external\glew\include;..\external\assimp\include;..\external\glm\include;..\external\openxr\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>include;..\external\glfw\include;..\external\glew\include;..\external\assimp\include;..\external\glm\include;..\external\openxr\include;..\external\imgui\include</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>..\external\glfw\lib\win;..\external\glew\lib\Release\x64;..\external\assimp\lib\Debug\;..\external\glm\lib\win;..\external\openxr\lib\win</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glfw3dll.lib;glew32.lib;opengl32.lib;assimp-vc143-mtd.lib;glm.lib;openxr_loaderd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\external\glfw\lib\win;..\external\glew\lib\Release\x64;..\external\assimp\lib\Debug\;..\external\glm\lib\win;..\external\openxr\lib\win;..\external\imgui\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glfw3dll.lib;glew32.lib;opengl32.lib;assimp-vc143-mtd.lib;glm.lib;openxr_loaderd.lib;imgui.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>copy /Y "..\external\glfw\lib\win\glfw3.dll" "$(TargetDir)"

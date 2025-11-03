@@ -25,6 +25,11 @@
 #include <vector>
 #include <algorithm>
 
+// ImGui includes
+#include <imgui.h>
+#include <imgui_impl_glfw.h>
+#include <imgui_impl_opengl3.h>
+
 namespace stereorizer::core
 { 
 	class Window
@@ -63,6 +68,8 @@ namespace stereorizer::core
 		void RenderModelsLeft();
 		void RenderModelsRight();
 		void Create();
+		void RenderImGui();
+		void handleMouseInput();
 
 		bool _xrInitialized = false;
 		// Inter-pupillary distance in meters (default 64mm)
