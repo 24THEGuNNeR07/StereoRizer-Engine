@@ -450,7 +450,7 @@ void stereorizer::core::Window::RenderImGui() {
 	ImGui::NewFrame();
 	
 	ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_FirstUseEver);
-	ImGui::SetNextWindowSize(ImVec2(350, 200), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ImVec2(500, 280), ImGuiCond_FirstUseEver);
 	
 	ImGui::Begin("Stereo Settings");
 	
@@ -463,27 +463,56 @@ void stereorizer::core::Window::RenderImGui() {
 	
 	ImGui::Separator();
 	
-	// Left view display mode selection
-	ImGui::Text("Left View Display Mode:");
-	bool showColor = (GetLeftViewDisplayMode() == ViewDisplayMode::Color);
-	bool showDepth = (GetLeftViewDisplayMode() == ViewDisplayMode::Depth);
+	// Create two-column layout for left and right view controls
+	ImGui::Columns(2, "ViewModes", true);
 	
-	if (ImGui::RadioButton("Color", showColor)) {
+	// Left column - Left view controls
+	ImGui::Text("Left View Display Mode:");
+	bool leftShowColor = (GetLeftViewDisplayMode() == ViewDisplayMode::Color);
+	bool leftShowDepth = (GetLeftViewDisplayMode() == ViewDisplayMode::Depth);
+	
+	if (ImGui::RadioButton("Color##Left", leftShowColor)) {
 		SetLeftViewDisplayMode(ViewDisplayMode::Color);
 	}
-	ImGui::SameLine();
-	if (ImGui::RadioButton("Depth", showDepth)) {
+	if (ImGui::RadioButton("Depth##Left", leftShowDepth)) {
 		SetLeftViewDisplayMode(ViewDisplayMode::Depth);
 	}
 	
-	// Depth texture info
+	// Left depth texture info
 	if (_leftRenderer && _leftRenderer->IsDepthTextureEnabled()) {
-		ImGui::TextColored(ImVec4(0, 1, 0, 1), "Depth texture active");
-		ImGui::Text("Depth Texture ID: %u", GetLeftViewDepthTexture());
-		ImGui::Text("Color Texture ID: %u", GetLeftViewColorTexture());
+		ImGui::TextColored(ImVec4(0, 1, 0, 1), "Left: Depth active");
+		ImGui::Text("Depth ID: %u", GetLeftViewDepthTexture());
+		ImGui::Text("Color ID: %u", GetLeftViewColorTexture());
 	} else {
-		ImGui::TextColored(ImVec4(1, 0, 0, 1), "Depth texture inactive");
+		ImGui::TextColored(ImVec4(1, 0, 0, 1), "Left: Depth inactive");
 	}
+	
+	// Move to right column
+	ImGui::NextColumn();
+	
+	// Right column - Right view controls
+	ImGui::Text("Right View Display Mode:");
+	bool rightShowColor = (GetRightViewDisplayMode() == ViewDisplayMode::Color);
+	bool rightShowDepth = (GetRightViewDisplayMode() == ViewDisplayMode::Depth);
+	
+	if (ImGui::RadioButton("Color##Right", rightShowColor)) {
+		SetRightViewDisplayMode(ViewDisplayMode::Color);
+	}
+	if (ImGui::RadioButton("Depth##Right", rightShowDepth)) {
+		SetRightViewDisplayMode(ViewDisplayMode::Depth);
+	}
+	
+	// Right depth texture info
+	if (_rightRenderer && _rightRenderer->IsDepthTextureEnabled()) {
+		ImGui::TextColored(ImVec4(0, 1, 0, 1), "Right: Depth active");
+		ImGui::Text("Depth ID: %u", GetRightViewDepthTexture());
+		ImGui::Text("Color ID: %u", GetRightViewColorTexture());
+	} else {
+		ImGui::TextColored(ImVec4(1, 0, 0, 1), "Right: Depth inactive");
+	}
+	
+	// End columns
+	ImGui::Columns(1);
 	
 	ImGui::Separator();
 	ImGui::Text("Inter-Pupillary Distance");
