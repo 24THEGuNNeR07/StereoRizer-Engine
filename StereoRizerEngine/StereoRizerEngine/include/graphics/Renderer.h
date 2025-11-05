@@ -21,7 +21,7 @@ namespace stereorizer::graphics
 		void Draw(std::shared_ptr<Model> model);
 
 		// Depth texture support
-		void SetupDepthTexture(int width, int height);
+		void SetupDepthTexture(int width, int height, bool isRightViewport = false);
 		void BeginDepthTextureRender();
 		void EndDepthTextureRender();
 		void RenderDepthVisualization(float nearPlane = 0.1f, float farPlane = 100.0f);
@@ -39,6 +39,7 @@ namespace stereorizer::graphics
 		bool _depthTextureEnabled = false;
 		int _textureWidth = 0;
 		int _textureHeight = 0;
+		bool _isRightViewport = false;
 		
 		// Full-screen quad for depth visualization
 		GLuint _quadVAO = 0;

@@ -23,10 +23,11 @@ Window::Window(int width, int height, const char* title)
 	_leftRenderer = std::make_unique<Renderer>();
 	_rightRenderer = std::make_unique<Renderer>();
 
-	// Setup depth texture for left renderer (always enabled)
+	// Setup depth texture for both renderers
 	int textureWidth = _width / 2;
 	int textureHeight = _height;
-	_leftRenderer->SetupDepthTexture(textureWidth, textureHeight);
+	_leftRenderer->SetupDepthTexture(textureWidth, textureHeight, false);  // Left viewport (starts at x=0)
+	_rightRenderer->SetupDepthTexture(textureWidth, textureHeight, true);  // Right viewport (starts at x=textureWidth)
 
 	// Position the stereo camera pair using IPD (left/right offset around origin)
 	// Calculate middle look-at point and set both cameras to look at it
@@ -227,18 +228,18 @@ void Window::Run()
 		if (newWidth != _width || newHeight != _height) {
 			_width = newWidth;
 			_height = newHeight;
-			int textureWidth = _width / 2; // Left view takes half the screen width
+			int textureWidth = _width / 2; // Each view takes half the screen width
 			int textureHeight = _height;
 			if (_leftRenderer)
-				_leftRenderer->SetupDepthTexture(textureWidth, textureHeight);
+				_leftRenderer->SetupDepthTexture(textureWidth, textureHeight, false);  // Left viewport
 			if (_rightRenderer)
-				_rightRenderer->SetupDepthTexture(textureWidth, textureHeight);
+				_rightRenderer->SetupDepthTexture(textureWidth, textureHeight, true);   // Right viewport
 		}
 
 		if (_xrInitialized)
 			_xrSupport.SetFrameSize(_width, _height);
 
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glViewport(0, 0, _width, _height);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
