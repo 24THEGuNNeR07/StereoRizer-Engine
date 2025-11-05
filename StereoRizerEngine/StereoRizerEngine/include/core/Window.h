@@ -32,7 +32,7 @@
 
 namespace stereorizer::core
 {
-	enum class LeftViewDisplayMode {
+	enum class ViewDisplayMode {
 		Color,
 		Depth
 	};
@@ -60,10 +60,15 @@ namespace stereorizer::core
 		void SetIPD(float ipd);
 
 		// Depth texture control
-		void SetLeftViewDisplayMode(LeftViewDisplayMode mode);
-		LeftViewDisplayMode GetLeftViewDisplayMode() const;
+		void SetLeftViewDisplayMode(ViewDisplayMode mode);
+		ViewDisplayMode GetLeftViewDisplayMode() const;
 		GLuint GetLeftViewDepthTexture() const;
 		GLuint GetLeftViewColorTexture() const;
+
+		void SetRightViewDisplayMode(ViewDisplayMode mode);
+		ViewDisplayMode GetRightViewDisplayMode() const;
+		GLuint GetRightViewDepthTexture() const;
+		GLuint GetRightViewColorTexture() const;
 
 	private:
 		int _width;
@@ -78,7 +83,6 @@ namespace stereorizer::core
 		bool UpdateXRViews();
 		void RenderModelsLeft();
 		void RenderModelsRight();
-		void RenderDepthVisualization();
 		void InitResources();
 		void RenderImGui();
 		void handleMouseInput();
@@ -100,6 +104,7 @@ namespace stereorizer::core
 		GraphicsAPI_Type m_apiType = GraphicsAPI_Type::OpenGL;
 		
 		// Depth texture state
-		LeftViewDisplayMode _leftViewDisplayMode = LeftViewDisplayMode::Color;
+		ViewDisplayMode _leftViewDisplayMode = ViewDisplayMode::Color;
+		ViewDisplayMode _rightViewDisplayMode = ViewDisplayMode::Color;
 	};
 }
