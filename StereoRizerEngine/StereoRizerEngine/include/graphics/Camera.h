@@ -28,6 +28,8 @@ namespace stereorizer::graphics
 
 		float GetYaw() const noexcept { return _yaw; }
 		float GetPitch() const noexcept { return _pitch; }
+		float GetNearPlane() const noexcept { return _NearPlane; }
+		float GetFarPlane() const noexcept { return _FarPlane; }
 
 		void SetViewMatrix(const glm::mat4& view);
 		void SetProjectionMatrix(const glm::mat4& proj);

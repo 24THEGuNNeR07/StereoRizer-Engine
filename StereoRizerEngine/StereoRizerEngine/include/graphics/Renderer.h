@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <GL/glew.h>
 
 #include "Shader.h"
 #include "Mesh.h"
@@ -19,7 +20,32 @@ namespace stereorizer::graphics
 		void Clear();
 		void Draw(std::shared_ptr<Model> model);
 
+		// Depth texture support
+		void SetupDepthTexture(int width, int height);
+		void BeginDepthTextureRender();
+		void EndDepthTextureRender();
+		void RenderDepthVisualization(float nearPlane = 0.1f, float farPlane = 100.0f);
+		GLuint GetDepthTexture() const { return _depthTexture; }
+		GLuint GetColorTexture() const { return _colorTexture; }
+		bool IsDepthTextureEnabled() const { return _depthTextureEnabled; }
+
 	private:
 		std::shared_ptr<Camera> _camera;
+		
+		// Depth texture rendering
+		GLuint _framebuffer = 0;
+		GLuint _colorTexture = 0;
+		GLuint _depthTexture = 0;
+		bool _depthTextureEnabled = false;
+		int _textureWidth = 0;
+		int _textureHeight = 0;
+		
+		// Full-screen quad for depth visualization
+		GLuint _quadVAO = 0;
+		GLuint _quadVBO = 0;
+		std::shared_ptr<Shader> _depthShader = nullptr;
+		
+		void SetupFullScreenQuad();
+		void CleanupFullScreenQuad();
 	};
 }

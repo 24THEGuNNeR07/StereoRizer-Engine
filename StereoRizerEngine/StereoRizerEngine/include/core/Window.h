@@ -54,6 +54,12 @@ namespace stereorizer::core
 		float GetIPD() const;
 		void SetIPD(float ipd);
 
+		// Depth texture control
+		void EnableLeftViewDepthTexture(bool enable = true);
+		bool IsLeftViewDepthTextureEnabled() const;
+		GLuint GetLeftViewDepthTexture() const;
+		GLuint GetLeftViewColorTexture() const;
+
 	private:
 		int _width;
 		int _height;
@@ -86,5 +92,8 @@ namespace stereorizer::core
 
 		stereorizer::xr::OpenXRSupport _xrSupport;
 		GraphicsAPI_Type m_apiType = GraphicsAPI_Type::OpenGL;
+		
+		// Depth texture state
+		bool _leftViewDepthTextureEnabled = false;
 	};
 }

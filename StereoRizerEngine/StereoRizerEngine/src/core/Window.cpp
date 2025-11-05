@@ -147,10 +147,23 @@ void Window::RenderModelsLeft()
 void Window::RenderModelsRight()
 {
 	if (!_rightRenderer) return;
-	for (auto& m : _models)
-	{
-		if (m)
-			_rightRenderer->Draw(m);
+	
+	// Always render to depth texture framebuffer first
+	if (_rightRenderer->IsDepthTextureEnabled()) {
+		_rightRenderer->BeginDepthTextureRender();
+		_rightRenderer->EndDepthTextureRender();
+	}
+	
+	// Render to the current viewport (right half of screen)
+	// Display either normal color rendering or depth visualization based on mode
+	if (_rightViewDisplayMode == ViewDisplayMode::Depth && _rightRenderer->IsDepthTextureEnabled()) {
+		RenderRightDepthVisualization();
+	} else {
+		// Normal color rendering
+		for (auto& m : _models) {
+			if (m)
+				_rightRenderer->Draw(m);
+		}
 	}
 }
 
@@ -171,7 +184,22 @@ void Window::Run()
 
 		glfwMakeContextCurrent(_window.get());
 
-		glfwGetFramebufferSize(_window.get(), &_width, &_height);
+		int newWidth, newHeight;
+		glfwGetFramebufferSize(_window.get(), &newWidth, &newHeight);
+		
+		// Update depth texture if window size changed
+		if (newWidth != _width || newHeight != _height) {
+			_width = newWidth;
+			_height = newHeight;
+			int textureWidth = _width / 2; // Each view takes half the screen width
+			int textureHeight = _height;
+			if (_leftRenderer) {
+				_leftRenderer->SetupDepthTexture(textureWidth, textureHeight);
+			}
+			if (_rightRenderer) {
+				_rightRenderer->SetupDepthTexture(textureWidth, textureHeight);
+			}
+		}
 
 		if (_xrInitialized)
 			_xrSupport.SetFrameSize(_width, _height);
@@ -191,7 +219,7 @@ void Window::Run()
 		RenderModelsLeft();
 
 		glViewport(_width / 2, 0, _width / 2, _height);
-		RenderModelsRight();
+		//RenderModelsRight();
 
 		glFlush();
 
@@ -387,7 +415,7 @@ void stereorizer::core::Window::RenderImGui() {
 	ImGui::NewFrame();
 	
 	ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_FirstUseEver);
-	ImGui::SetNextWindowSize(ImVec2(300, 150), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ImVec2(400, 300), ImGuiCond_FirstUseEver);
 	
 	ImGui::Begin("Stereo Settings");
 	
@@ -397,6 +425,54 @@ void stereorizer::core::Window::RenderImGui() {
 	}
 	
 	ImGui::Text("IPD: %.1f mm", currentIPD * 1000.0f);
+	
+	ImGui::Separator();
+	
+	// Left view display mode selection
+	ImGui::Text("Left View Display Mode:");
+	bool leftShowColor = (GetLeftViewDisplayMode() == ViewDisplayMode::Color);
+	bool leftShowDepth = (GetLeftViewDisplayMode() == ViewDisplayMode::Depth);
+	
+	if (ImGui::RadioButton("Left Color", leftShowColor)) {
+		SetLeftViewDisplayMode(ViewDisplayMode::Color);
+	}
+	ImGui::SameLine();
+	if (ImGui::RadioButton("Left Depth", leftShowDepth)) {
+		SetLeftViewDisplayMode(ViewDisplayMode::Depth);
+	}
+	
+	// Right view display mode selection
+	ImGui::Text("Right View Display Mode:");
+	bool rightShowColor = (GetRightViewDisplayMode() == ViewDisplayMode::Color);
+	bool rightShowDepth = (GetRightViewDisplayMode() == ViewDisplayMode::Depth);
+	
+	if (ImGui::RadioButton("Right Color", rightShowColor)) {
+		SetRightViewDisplayMode(ViewDisplayMode::Color);
+	}
+	ImGui::SameLine();
+	if (ImGui::RadioButton("Right Depth", rightShowDepth)) {
+		SetRightViewDisplayMode(ViewDisplayMode::Depth);
+	}
+	
+	// Left renderer depth texture info
+	ImGui::Text("Left Renderer:");
+	if (_leftRenderer && _leftRenderer->IsDepthTextureEnabled()) {
+		ImGui::TextColored(ImVec4(0, 1, 0, 1), "  Depth texture active");
+		ImGui::Text("  Depth Texture ID: %u", GetLeftViewDepthTexture());
+		ImGui::Text("  Color Texture ID: %u", GetLeftViewColorTexture());
+	} else {
+		ImGui::TextColored(ImVec4(1, 0, 0, 1), "  Depth texture inactive");
+	}
+	
+	// Right renderer depth texture info
+	ImGui::Text("Right Renderer:");
+	if (_rightRenderer && _rightRenderer->IsDepthTextureEnabled()) {
+		ImGui::TextColored(ImVec4(0, 1, 0, 1), "  Depth texture active");
+		ImGui::Text("  Depth Texture ID: %u", GetRightViewDepthTexture());
+		ImGui::Text("  Color Texture ID: %u", GetRightViewColorTexture());
+	} else {
+		ImGui::TextColored(ImVec4(1, 0, 0, 1), "  Depth texture inactive");
+	}
 	
 	ImGui::Separator();
 	ImGui::Text("Inter-Pupillary Distance");
@@ -441,6 +517,86 @@ void stereorizer::core::Window::handleMouseInput() {
 		for (auto* cam : cameras) {
 			cam->SetYaw(cam->GetYaw() + xoffset);
 			cam->SetPitch(cam->GetPitch() + yoffset);
+		}
+	}
+}
+
+void Window::SetLeftViewDisplayMode(ViewDisplayMode mode) {
+	_leftViewDisplayMode = mode;
+}
+
+ViewDisplayMode Window::GetLeftViewDisplayMode() const {
+	return _leftViewDisplayMode;
+}
+
+void Window::SetRightViewDisplayMode(ViewDisplayMode mode) {
+	_rightViewDisplayMode = mode;
+}
+
+ViewDisplayMode Window::GetRightViewDisplayMode() const {
+	return _rightViewDisplayMode;
+}
+
+GLuint Window::GetLeftViewDepthTexture() const {
+	if (_leftRenderer && _leftRenderer->IsDepthTextureEnabled()) {
+		return _leftRenderer->GetDepthTexture();
+	}
+	return 0;
+}
+
+GLuint Window::GetLeftViewColorTexture() const {
+	if (_leftRenderer && _leftRenderer->IsDepthTextureEnabled()) {
+		return _leftRenderer->GetColorTexture();
+	}
+	return 0;
+}
+
+GLuint Window::GetRightViewDepthTexture() const {
+	if (_rightRenderer && _rightRenderer->IsDepthTextureEnabled()) {
+		return _rightRenderer->GetDepthTexture();
+	}
+	return 0;
+}
+
+GLuint Window::GetRightViewColorTexture() const {
+	if (_rightRenderer && _rightRenderer->IsDepthTextureEnabled()) {
+		return _rightRenderer->GetColorTexture();
+	}
+	return 0;
+}
+
+void Window::RenderLeftDepthVisualization() {
+	if (_leftRenderer && _leftRenderer->IsDepthTextureEnabled()) {
+		// Get camera near and far planes for proper depth linearization
+		auto camera = _leftRenderer->GetCamera();
+		float nearPlane = camera ? camera->GetNearPlane() : 0.1f;
+		float farPlane = camera ? camera->GetFarPlane() : 100.0f;
+		
+		// Render the depth texture as a full-screen visualization
+		_leftRenderer->RenderDepthVisualization(nearPlane, farPlane);
+	} else {
+		// Fallback to normal rendering if depth texture is not available
+		for (auto& m : _models) {
+			if (m)
+				_leftRenderer->Draw(m);
+		}
+	}
+}
+
+void Window::RenderRightDepthVisualization() {
+	if (_rightRenderer && _rightRenderer->IsDepthTextureEnabled()) {
+		// Get camera near and far planes for proper depth linearization
+		auto camera = _rightRenderer->GetCamera();
+		float nearPlane = camera ? camera->GetNearPlane() : 0.1f;
+		float farPlane = camera ? camera->GetFarPlane() : 100.0f;
+		
+		// Render the depth texture as a full-screen visualization
+		_rightRenderer->RenderDepthVisualization(nearPlane, farPlane);
+	} else {
+		// Fallback to normal rendering if depth texture is not available
+		for (auto& m : _models) {
+			if (m)
+				_rightRenderer->Draw(m);
 		}
 	}
 }
