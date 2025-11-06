@@ -72,13 +72,11 @@ void Renderer::BeginDepthTextureRender() {
 	if (_framebuffer == 0) {
 		// Save current OpenGL state
 		GLint savedFramebuffer, savedTexture2D, savedActiveTexture;
-		GLint savedViewport[4];
 		
 		glGetIntegerv(GL_FRAMEBUFFER_BINDING, &savedFramebuffer);
 		glGetIntegerv(GL_ACTIVE_TEXTURE, &savedActiveTexture);
 		glActiveTexture(GL_TEXTURE0);
 		glGetIntegerv(GL_TEXTURE_BINDING_2D, &savedTexture2D);
-		glGetIntegerv(GL_VIEWPORT, savedViewport);
 		
 		// Create framebuffer
 		glGenFramebuffers(1, &_framebuffer);
@@ -114,7 +112,7 @@ void Renderer::BeginDepthTextureRender() {
 			glBindFramebuffer(GL_FRAMEBUFFER, savedFramebuffer);
 			glBindTexture(GL_TEXTURE_2D, savedTexture2D);
 			glActiveTexture(savedActiveTexture);
-			glViewport(savedViewport[0], savedViewport[1], savedViewport[2], savedViewport[3]);
+			//glViewport(0, 0, _textureWidth, _textureHeight);
 			return;
 		} else {
 			LOG_INFO("Depth texture framebuffer created on first use");
@@ -126,14 +124,13 @@ void Renderer::BeginDepthTextureRender() {
 		glBindFramebuffer(GL_FRAMEBUFFER, savedFramebuffer);
 		glBindTexture(GL_TEXTURE_2D, savedTexture2D);
 		glActiveTexture(savedActiveTexture);
-		glViewport(savedViewport[0], savedViewport[1], savedViewport[2], savedViewport[3]);
+		//glViewport(0, 0, _textureWidth, _textureHeight);
 	}
 	
 	// Now use the framebuffer for rendering
 	glBindFramebuffer(GL_FRAMEBUFFER, _framebuffer);
 	// Set viewport based on whether this is right viewport (shifted) or left viewport
-	int viewportX = _isRightViewport ? _textureWidth : 0;
-	glViewport(viewportX, 0, _textureWidth, _textureHeight);
+	glViewport(0, 0, _textureWidth, _textureHeight);
 	
 	// Ensure depth testing and depth writes are enabled
 	glEnable(GL_DEPTH_TEST);
@@ -146,6 +143,7 @@ void Renderer::BeginDepthTextureRender() {
 void Renderer::EndDepthTextureRender() {
 	if (!_depthTextureEnabled) return;
 	
+	glViewport(_isRightViewport ? _textureWidth : 0, 0, _textureWidth, _textureHeight);
 	// Restore default framebuffer
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	// Note: Viewport will be set by the caller (Window class) based on which view is being rendered
@@ -222,14 +220,6 @@ void Renderer::RenderDepthVisualization(float nearPlane, float farPlane) {
 	if (!_depthShader || _quadVAO == 0) {
 		LOG_ERROR("Depth visualization resources not available");
 		return;
-	}
-	
-	// Debug logging
-	static bool firstTime = true;
-	if (firstTime) {
-		LOG_INFO("Rendering depth visualization - Near: " + std::to_string(nearPlane) + ", Far: " + std::to_string(farPlane));
-		LOG_INFO("Depth texture ID: " + std::to_string(_depthTexture) + ", Size: " + std::to_string(_textureWidth) + "x" + std::to_string(_textureHeight));
-		firstTime = false;
 	}
 	
 	// Save current OpenGL state

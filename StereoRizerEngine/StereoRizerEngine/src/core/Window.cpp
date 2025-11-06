@@ -184,7 +184,6 @@ void Window::RenderModelsRight()
 		}
 		_rightRenderer->EndDepthTextureRender();
 	}
-
 	// Render to the current viewport (left half of screen)
 	// Display either normal color rendering or depth visualization based on mode
 	if (_rightViewDisplayMode == ViewDisplayMode::Depth && _rightRenderer->IsDepthTextureEnabled()) {
@@ -450,12 +449,12 @@ void stereorizer::core::Window::RenderImGui() {
 	ImGui::NewFrame();
 	
 	ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_FirstUseEver);
-	ImGui::SetNextWindowSize(ImVec2(500, 280), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ImVec2(400, 150), ImGuiCond_FirstUseEver);
 	
 	ImGui::Begin("Stereo Settings");
 	
 	float currentIPD = GetIPD();
-	if (ImGui::SliderFloat("IPD (meters)", &currentIPD, 0.05f, 0.2f, "%.3f")) {
+	if (ImGui::SliderFloat("", &currentIPD, 0.05f, 0.2f, "%.3f")) {
 		SetIPD(currentIPD);
 	}
 	
@@ -478,15 +477,6 @@ void stereorizer::core::Window::RenderImGui() {
 		SetLeftViewDisplayMode(ViewDisplayMode::Depth);
 	}
 	
-	// Left depth texture info
-	if (_leftRenderer && _leftRenderer->IsDepthTextureEnabled()) {
-		ImGui::TextColored(ImVec4(0, 1, 0, 1), "Left: Depth active");
-		ImGui::Text("Depth ID: %u", GetLeftViewDepthTexture());
-		ImGui::Text("Color ID: %u", GetLeftViewColorTexture());
-	} else {
-		ImGui::TextColored(ImVec4(1, 0, 0, 1), "Left: Depth inactive");
-	}
-	
 	// Move to right column
 	ImGui::NextColumn();
 	
@@ -502,21 +492,8 @@ void stereorizer::core::Window::RenderImGui() {
 		SetRightViewDisplayMode(ViewDisplayMode::Depth);
 	}
 	
-	// Right depth texture info
-	if (_rightRenderer && _rightRenderer->IsDepthTextureEnabled()) {
-		ImGui::TextColored(ImVec4(0, 1, 0, 1), "Right: Depth active");
-		ImGui::Text("Depth ID: %u", GetRightViewDepthTexture());
-		ImGui::Text("Color ID: %u", GetRightViewColorTexture());
-	} else {
-		ImGui::TextColored(ImVec4(1, 0, 0, 1), "Right: Depth inactive");
-	}
-	
 	// End columns
 	ImGui::Columns(1);
-	
-	ImGui::Separator();
-	ImGui::Text("Inter-Pupillary Distance");
-	ImGui::TextWrapped("Adjust the distance between the left and right eye cameras for comfortable stereo viewing.");
 	
 	ImGui::End();
 
