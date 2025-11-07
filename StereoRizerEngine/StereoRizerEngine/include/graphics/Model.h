@@ -17,6 +17,7 @@ namespace stereorizer::graphics
 
 		std::shared_ptr<Mesh> GetMesh() const noexcept { return _mesh; }
 		std::shared_ptr<Shader> GetShader() const noexcept { return _shader; }
+		const glm::mat4& GetTransformMatrix() const noexcept { return _transform; }
 		void Draw() const;
 
 		// Transformations

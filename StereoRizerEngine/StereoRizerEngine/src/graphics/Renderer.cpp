@@ -272,3 +272,87 @@ void Renderer::RenderDepthVisualization(float nearPlane, float farPlane) {
 		glEnable(GL_DEPTH_TEST);
 	}
 }
+
+void Renderer::RenderReprojection(const std::vector<std::shared_ptr<Model>>& models, Renderer& leftRenderer, float nearPlane, float farPlane) {
+	if (!leftRenderer.IsDepthTextureEnabled() || leftRenderer.GetDepthTexture() == 0 || leftRenderer.GetColorTexture() == 0) {
+		LOG_ERROR("Cannot render reprojection: left renderer textures not available");
+		return;
+	}
+
+	// Load reprojection shader
+	std::shared_ptr<Shader> reprojectionShader;
+	try {
+		reprojectionShader = std::make_shared<Shader>("resources/shaders/Reprojection.shader");
+	}
+	catch (const std::exception& e) {
+		LOG_ERROR(std::string("Failed to load reprojection shader: ") + e.what());
+		return;
+	}
+
+	if (!reprojectionShader) {
+		LOG_ERROR("Reprojection shader not available");
+		return;
+	}
+
+	// Debug logging
+	static bool firstTime = true;
+	if (firstTime) {
+		LOG_INFO("Rendering reprojection with models - Near: " + std::to_string(nearPlane) + ", Far: " + std::to_string(farPlane));
+		LOG_INFO("Left depth texture ID: " + std::to_string(leftRenderer.GetDepthTexture()));
+		LOG_INFO("Left color texture ID: " + std::to_string(leftRenderer.GetColorTexture()));
+		firstTime = false;
+	}
+
+	// Bind reprojection shader
+	reprojectionShader->ReloadIfChanged();
+	reprojectionShader->Bind();
+
+	// Set uniform values
+	glUniform1f(glGetUniformLocation(reprojectionShader->GetID(), "nearPlane"), nearPlane);
+	glUniform1f(glGetUniformLocation(reprojectionShader->GetID(), "farPlane"), farPlane);
+
+	// Upload camera matrices
+	auto leftCamera = leftRenderer.GetCamera();
+	auto rightCamera = this->GetCamera();
+
+	if (leftCamera && rightCamera) {
+		// Upload right camera matrices (used by vertex shader)
+		if (_camera) {
+			_camera->UploadToShader(reprojectionShader);
+		}
+
+		// Upload left camera matrices for reprojection
+		GLint leftViewMatrixLoc = glGetUniformLocation(reprojectionShader->GetID(), "leftViewMatrix");
+		GLint leftProjMatrixLoc = glGetUniformLocation(reprojectionShader->GetID(), "leftProjectionMatrix");
+
+		if (leftViewMatrixLoc != -1) {
+			glUniformMatrix4fv(leftViewMatrixLoc, 1, GL_FALSE, glm::value_ptr(leftCamera->GetViewMatrix()));
+		}
+		if (leftProjMatrixLoc != -1) {
+			glUniformMatrix4fv(leftProjMatrixLoc, 1, GL_FALSE, glm::value_ptr(leftCamera->GetProjectionMatrix()));
+		}
+	}
+
+	// Bind left renderer textures
+	// Left depth texture (texture unit 0)
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, leftRenderer.GetDepthTexture());
+	glUniform1i(glGetUniformLocation(reprojectionShader->GetID(), "leftDepthTexture"), 0);
+
+	// Left color texture (texture unit 1)
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, leftRenderer.GetColorTexture());
+	glUniform1i(glGetUniformLocation(reprojectionShader->GetID(), "leftColorTexture"), 1);
+
+	// Render models with reprojection shader
+	for (auto& model : models) {
+		if (model) {
+			// Upload model matrix to the reprojection shader
+			GLint modelLoc = glGetUniformLocation(reprojectionShader->GetID(), "modelMatrix");
+			glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model->GetTransformMatrix()));
+
+			// Draw the model's mesh directly (bypassing Model::Draw() to avoid shader binding)
+			model->GetMesh()->Draw();
+		}
+	}
+}

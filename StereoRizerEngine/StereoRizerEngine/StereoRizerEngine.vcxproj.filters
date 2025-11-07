@@ -72,6 +72,9 @@
     <ClCompile Include="src\graphics\ElementBuffer.cpp">
       <Filter>Source Files\Graphics</Filter>
     </ClCompile>
+    <ClCompile Include="src\graphics\Light.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\core\Window.h">
@@ -113,16 +116,22 @@
     <ClInclude Include="include\graphics\Vertex.h">
       <Filter>Header Files\Graphics</Filter>
     </ClInclude>
+    <ClInclude Include="include\graphics\Light.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="resources\shaders\Flat.shader">
       <Filter>Resource Files\Shaders</Filter>
     </None>
-    <None Include="resources\shaders\Phong.shader">
+    <None Include="resources\shaders\DepthVisualization.shader">
       <Filter>Resource Files\Shaders</Filter>
     </None>
-    <None Include="resources\shaders\DepthVisualization.shader">
+    <None Include="resources\shaders\PhongDiffuseOnly.shader">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="resources\shaders\Reprojection.shader">
       <Filter>Resource Files\Shaders</Filter>
     </None>
   </ItemGroup>

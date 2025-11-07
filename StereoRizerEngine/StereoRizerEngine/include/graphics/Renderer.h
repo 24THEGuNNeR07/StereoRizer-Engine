@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <vector>
 #include <GL/glew.h>
 
 #include "Shader.h"
@@ -30,6 +31,7 @@ namespace stereorizer::graphics
 		void BeginDepthTextureRender();
 		void EndDepthTextureRender();
 		void RenderDepthVisualization(float nearPlane = 0.1f, float farPlane = 100.0f);
+		void RenderReprojection(const std::vector<std::shared_ptr<Model>>& models, Renderer& leftRenderer, float nearPlane = 0.1f, float farPlane = 100.0f);
 		GLuint GetDepthTexture() const { return _depthTexture; }
 		GLuint GetColorTexture() const { return _colorTexture; }
 		bool IsDepthTextureEnabled() const { return _depthTextureEnabled; }

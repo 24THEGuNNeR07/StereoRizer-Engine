@@ -1,8 +1,9 @@
-﻿#include "core/Window.h"
+#include "core/Window.h"
 #include "graphics/Shader.h"
 #include "graphics/Model.h"
 #include "core/Common.h"
 #include "graphics/Renderer.h"
+#include "graphics/Light.h"
 #include "xr/OpenXRSupport.h"
 #include <glm/glm.hpp>
 #include <cmath>
@@ -22,6 +23,16 @@ Window::Window(int width, int height, const char* title)
 	InitResources();
 	_leftRenderer = std::make_unique<Renderer>();
 	_rightRenderer = std::make_unique<Renderer>();
+
+	// Create a shared light for both renderers
+	_sceneLight = std::make_shared<Light>(LightType::Directional);
+	_sceneLight->SetDirection(glm::vec3(-1.0f, -1.0f, -1.0f));
+	_sceneLight->SetColor(glm::vec3(1.0f, 1.0f, 1.0f));
+	_sceneLight->SetIntensity(1.0f);
+	
+	// Set the same light for both renderers
+	_leftRenderer->SetLight(_sceneLight);
+	_rightRenderer->SetLight(_sceneLight);
 
 	// Setup depth texture for both renderers
 	int textureWidth = _width / 2;
@@ -106,10 +117,16 @@ void Window::RemoveModel(std::shared_ptr<Model> model)
 		_models.erase(it);
 }
 
-void stereorizer::core::Window::SetLight(std::shared_ptr<stereorizer::graphics::Light> light)
+void Window::SetLight(std::shared_ptr<Light> light)
 {
-	_leftRenderer->SetLight(light);
-	_rightRenderer->SetLight(light);
+	_sceneLight = light;
+	if (_leftRenderer) _leftRenderer->SetLight(light);
+	if (_rightRenderer) _rightRenderer->SetLight(light);
+}
+
+std::shared_ptr<Light> Window::GetLight() const
+{
+	return _sceneLight;
 }
 
 bool Window::UpdateXRViews()
@@ -190,8 +207,9 @@ void Window::RenderModelsRight()
 		}
 		_rightRenderer->EndDepthTextureRender();
 	}
-	// Render to the current viewport (left half of screen)
-	// Display either normal color rendering or depth visualization based on mode
+
+	// Render to the current viewport (right half of screen)
+	// Display based on selected mode: normal color, depth visualization, or reprojection mask
 	if (_rightViewDisplayMode == ViewDisplayMode::Depth && _rightRenderer->IsDepthTextureEnabled()) {
 		auto camera = _rightRenderer->GetCamera();
 		float nearPlane = camera ? camera->GetNearPlane() : 0.1f;
@@ -199,6 +217,15 @@ void Window::RenderModelsRight()
 
 		// Render the depth texture as a full-screen visualization
 		_rightRenderer->RenderDepthVisualization(nearPlane, farPlane);
+	}
+	else if (_rightViewDisplayMode == ViewDisplayMode::ReprojectionMask && 
+			 _leftRenderer->IsDepthTextureEnabled()) {
+		auto camera = _rightRenderer->GetCamera();
+		float nearPlane = camera ? camera->GetNearPlane() : 0.1f;
+		float farPlane = camera ? camera->GetFarPlane() : 100.0f;
+
+		// Render the reprojection mask
+		_rightRenderer->RenderReprojection(_models, *_leftRenderer, nearPlane, farPlane);
 	}
 	else {
 		// Normal color rendering
@@ -455,12 +482,12 @@ void stereorizer::core::Window::RenderImGui() {
 	ImGui::NewFrame();
 	
 	ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_FirstUseEver);
-	ImGui::SetNextWindowSize(ImVec2(400, 150), ImGuiCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ImVec2(500, 280), ImGuiCond_FirstUseEver);
 	
 	ImGui::Begin("Stereo Settings");
 	
 	float currentIPD = GetIPD();
-	if (ImGui::SliderFloat("", &currentIPD, 0.05f, 0.2f, "%.3f")) {
+	if (ImGui::SliderFloat("IPD (meters)", &currentIPD, 0.05f, 0.5f, "%.3f")) {
 		SetIPD(currentIPD);
 	}
 	
@@ -490,6 +517,7 @@ void stereorizer::core::Window::RenderImGui() {
 	ImGui::Text("Right View Display Mode:");
 	bool rightShowColor = (GetRightViewDisplayMode() == ViewDisplayMode::Color);
 	bool rightShowDepth = (GetRightViewDisplayMode() == ViewDisplayMode::Depth);
+	bool rightShowReprojection = (GetRightViewDisplayMode() == ViewDisplayMode::ReprojectionMask);
 	
 	if (ImGui::RadioButton("Color##Right", rightShowColor)) {
 		SetRightViewDisplayMode(ViewDisplayMode::Color);
@@ -497,9 +525,16 @@ void stereorizer::core::Window::RenderImGui() {
 	if (ImGui::RadioButton("Depth##Right", rightShowDepth)) {
 		SetRightViewDisplayMode(ViewDisplayMode::Depth);
 	}
-	
+	if (ImGui::RadioButton("Reprojection Mask##Right", rightShowReprojection)) {
+		SetRightViewDisplayMode(ViewDisplayMode::ReprojectionMask);
+	}
+
 	// End columns
 	ImGui::Columns(1);
+	
+	ImGui::Separator();
+	ImGui::Text("Inter-Pupillary Distance");
+	ImGui::TextWrapped("Adjust the distance between the left and right eye cameras for comfortable stereo viewing.");
 	
 	ImGui::End();
 
