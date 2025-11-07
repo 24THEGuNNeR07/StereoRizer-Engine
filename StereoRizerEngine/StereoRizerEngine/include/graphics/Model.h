@@ -23,10 +23,12 @@ namespace stereorizer::graphics
 		void Translate(const glm::vec3& offset);
 		void Rotate(float angle, const glm::vec3& axis);
 		void Scale(const glm::vec3& scale);
+		void SetColor(const glm::vec3& color) { _color = color; }
 
 	private:
 		std::shared_ptr<Mesh> _mesh;
 		std::shared_ptr<Shader> _shader;
 		glm::mat4 _transform = glm::mat4(1.0f);
+		glm::vec3 _color = glm::vec3(1.0f);
 	};
 }

@@ -34,7 +34,14 @@ void Renderer::Clear() {
 void Renderer::Draw(std::shared_ptr<Model> model) {
 	if (_camera)
 		_camera->UploadToShader(model->GetShader());
+	if (_light)
+		_light->UploadToShader(model->GetShader()->GetID(), "light");
 	model->Draw();
+}
+
+void stereorizer::graphics::Renderer::SetLight(std::shared_ptr<Light> light)
+{
+	_light = light;
 }
 
 void Renderer::SetupDepthTexture(int width, int height, bool isRightViewport) {

@@ -16,6 +16,7 @@
 #include "openxr/openxr_platform.h"
 
 #include "graphics/Renderer.h"
+#include "graphics/Light.h"
 #include "graphics/GfxAPIUtils.h"
 #include "xr/OpenXRSupport.h"
 #include <vector>
@@ -51,6 +52,10 @@ namespace stereorizer::core
 		// Manage scene models owned by the application (Window stores non-owning pointers)
 		void AddModel(std::shared_ptr<stereorizer::graphics::Model> model);
 		void RemoveModel(std::shared_ptr<stereorizer::graphics::Model> model);
+		
+		// Light management
+		void SetLight(std::shared_ptr<stereorizer::graphics::Light> light);
+		std::shared_ptr<stereorizer::graphics::Light> GetLight() const;
 
 		int GetWidth() const;
 		int GetHeight() const;
@@ -80,6 +85,7 @@ namespace stereorizer::core
 		std::unique_ptr<stereorizer::graphics::Renderer> _leftRenderer;
 		std::unique_ptr<stereorizer::graphics::Renderer> _rightRenderer;
 		std::vector<std::shared_ptr<stereorizer::graphics::Model>> _models;
+		std::shared_ptr<stereorizer::graphics::Light> _sceneLight;
 		bool UpdateXRViews();
 		void RenderModelsLeft();
 		void RenderModelsRight();

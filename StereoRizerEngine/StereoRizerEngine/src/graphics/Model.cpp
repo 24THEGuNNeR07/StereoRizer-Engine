@@ -32,6 +32,9 @@ void Model::Draw() const
 	GLint modelLoc = glGetUniformLocation(_shader->GetID(), "modelMatrix");
 	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(_transform));
 
+	GLint colorLoc = glGetUniformLocation(_shader->GetID(), "materialColor");
+	glUniform3fv(colorLoc, 1, glm::value_ptr(_color));
+
 	_mesh->Draw();
 }
 

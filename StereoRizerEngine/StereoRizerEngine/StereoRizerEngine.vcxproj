@@ -149,6 +149,7 @@ copy /Y "..\external\assimp\bin\Debug\assimp-vc143-mtd.dll" "$(TargetDir)"</Comm
     <ClCompile Include="src\graphics\Camera.cpp" />
     <ClCompile Include="src\core\Main.cpp" />
     <ClCompile Include="src\graphics\ElementBuffer.cpp" />
+    <ClCompile Include="src\graphics\Light.cpp" />
     <ClCompile Include="src\graphics\Mesh.cpp" />
     <ClCompile Include="src\graphics\Model.cpp" />
     <ClCompile Include="src\graphics\VertexArray.cpp" />
@@ -163,6 +164,7 @@ copy /Y "..\external\assimp\bin\Debug\assimp-vc143-mtd.dll" "$(TargetDir)"</Comm
     <ClInclude Include="include\core\Common.h" />
     <ClInclude Include="include\graphics\ElementBuffer.h" />
     <ClInclude Include="include\graphics\GfxAPIUtils.h" />
+    <ClInclude Include="include\graphics\Light.h" />
     <ClInclude Include="include\graphics\Mesh.h" />
     <ClInclude Include="include\graphics\Model.h" />
     <ClInclude Include="include\graphics\Vertex.h" />
@@ -178,6 +180,7 @@ copy /Y "..\external\assimp\bin\Debug\assimp-vc143-mtd.dll" "$(TargetDir)"</Comm
     <None Include="resources\shaders\Flat.shader" />
     <None Include="packages.config" />
     <None Include="resources\shaders\Phong.shader" />
+    <None Include="resources\shaders\PhongDiffuseOnly.shader" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

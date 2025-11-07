@@ -106,6 +106,12 @@ void Window::RemoveModel(std::shared_ptr<Model> model)
 		_models.erase(it);
 }
 
+void stereorizer::core::Window::SetLight(std::shared_ptr<stereorizer::graphics::Light> light)
+{
+	_leftRenderer->SetLight(light);
+	_rightRenderer->SetLight(light);
+}
+
 bool Window::UpdateXRViews()
 {
 	if (!_xrInitialized)

@@ -7,6 +7,7 @@
 #include "Mesh.h"
 #include "Model.h"
 #include "Camera.h"
+#include "Light.h"
 
 namespace stereorizer::graphics
 {
@@ -19,6 +20,10 @@ namespace stereorizer::graphics
 
 		void Clear();
 		void Draw(std::shared_ptr<Model> model);
+		
+		// Light management
+		void SetLight(std::shared_ptr<Light> light);
+		std::shared_ptr<Light> GetLight() const { return _light; }
 
 		// Depth texture support
 		void SetupDepthTexture(int width, int height, bool isRightViewport = false);
@@ -31,6 +36,7 @@ namespace stereorizer::graphics
 
 	private:
 		std::shared_ptr<Camera> _camera;
+		std::shared_ptr<Light> _light;
 		
 		// Depth texture rendering
 		GLuint _framebuffer = 0;
