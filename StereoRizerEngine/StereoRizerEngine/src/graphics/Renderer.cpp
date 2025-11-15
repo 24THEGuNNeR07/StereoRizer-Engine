@@ -110,6 +110,10 @@ void Renderer::BeginDepthTextureRender() {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, _depthTexture, 0);
 
+		// Ensure we have both color and depth attachments
+		GLenum drawBuffers[] = { GL_COLOR_ATTACHMENT0 };
+		glDrawBuffers(1, drawBuffers);
+		
 		// Check framebuffer completeness
 		GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 		if (status != GL_FRAMEBUFFER_COMPLETE) {
@@ -149,6 +153,17 @@ void Renderer::BeginDepthTextureRender() {
 
 void Renderer::EndDepthTextureRender() {
 	if (!_depthTextureEnabled) return;
+	
+	// Check framebuffer status before finishing
+	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if (status != GL_FRAMEBUFFER_COMPLETE) {
+		LOG_ERROR("Framebuffer not complete when ending render! Status: " + std::to_string(status));
+	}
+	
+	// Ensure all framebuffer operations are complete before switching back to default framebuffer
+	// This is critical for ensuring textures are ready for subsequent reads
+	glFlush();
+	glFinish(); // Add more aggressive sync to ensure texture is completely written
 	
 	glViewport(_isRightViewport ? _textureWidth : 0, 0, _textureWidth, _textureHeight);
 	// Restore default framebuffer
@@ -333,16 +348,31 @@ void Renderer::RenderReprojection(const std::vector<std::shared_ptr<Model>>& mod
 		}
 	}
 
+	// Validate texture handles before binding
+	GLuint depthTexture = leftRenderer.GetDepthTexture();
+	GLuint colorTexture = leftRenderer.GetColorTexture();
+	
+	if (depthTexture == 0 || colorTexture == 0) {
+		LOG_ERROR("Invalid texture handles - Depth: " + std::to_string(depthTexture) + ", Color: " + std::to_string(colorTexture));
+		return;
+	}
+	
 	// Bind left renderer textures
 	// Left depth texture (texture unit 0)
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, leftRenderer.GetDepthTexture());
+	glBindTexture(GL_TEXTURE_2D, depthTexture);
 	glUniform1i(glGetUniformLocation(reprojectionShader->GetID(), "leftDepthTexture"), 0);
 
 	// Left color texture (texture unit 1)
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, leftRenderer.GetColorTexture());
+	glBindTexture(GL_TEXTURE_2D, colorTexture);
 	glUniform1i(glGetUniformLocation(reprojectionShader->GetID(), "leftColorTexture"), 1);
+	
+	// Check if textures are valid OpenGL objects
+	if (!glIsTexture(depthTexture) || !glIsTexture(colorTexture)) {
+		LOG_ERROR("Invalid OpenGL texture objects - Depth valid: " + std::to_string(glIsTexture(depthTexture)) + 
+				  ", Color valid: " + std::to_string(glIsTexture(colorTexture)));
+	}
 
 	// Render models with reprojection shader
 	for (auto& model : models) {

@@ -44,7 +44,7 @@ uniform float nearPlane;
 uniform float farPlane;
 
 // Depth comparison margin
-const float DEPTH_MARGIN = 0.00001;      // Hardcoded margin for depth comparison
+const float DEPTH_MARGIN = 0.1;      // Hardcoded margin for depth comparison
 const vec3 MISMATCH_COLOR = vec3(1.0, 0.078, 0.576); // Pink color for mismatches
 
 // Linearize depth value
@@ -117,7 +117,9 @@ void main()
         color = vec4(MISMATCH_COLOR, 1.0);
         return;
     }
-    
+
+    vec2 shearUV = rightScreenCoord - leftScreenCoord;
+
     // Step 7: Sample depth from left camera at projected coordinates
     float leftDepthValue = texture(leftDepthTexture, leftScreenCoord).r;
     
@@ -133,13 +135,13 @@ void main()
     
     // Step 9: Compare depths - if close, sample left color, else mismatch color
     //if (abs(leftLinearDepth - rightLinearDepth) <= DEPTH_MARGIN) {
-    //    vec4 leftColorValue = texture(leftColorTexture, leftScreenCoord);
+    //    vec4 leftColorValue = texture(leftColorTexture, leftScreenCoord + shearUV);
     //    color = leftColorValue;
     //} else {
-    //    // Depth mismatch - render pink
+    //    // Depth mismatch - render pinkrightScreenCoord
     //    color = vec4(MISMATCH_COLOR, 1.0);
     //}
 
-    vec4 leftColorValue = texture(leftColorTexture, leftScreenCoord);
-        color = leftColorValue;
+    vec4 leftColorValue = texture(leftColorTexture, leftScreenCoord + shearUV);
+    color = leftColorValue;
 }

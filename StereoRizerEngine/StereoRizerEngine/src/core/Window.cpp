@@ -249,6 +249,15 @@ void Window::Run()
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
 
+		// Calculate current FPS
+		_frameCount++;
+		_frameTimeAccumulator += deltaTime;
+		if (_frameTimeAccumulator >= 1.0f) {
+			_currentFPS = _frameCount / _frameTimeAccumulator;
+			_frameCount = 0;
+			_frameTimeAccumulator = 0.0f;
+		}
+
 		PollEvents();
 
 		glfwMakeContextCurrent(_window.get());
@@ -285,10 +294,14 @@ void Window::Run()
 		glViewport(0, 0, _width / 2, _height);
 		RenderModelsLeft();
 
+		GLsync fence = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+		glClientWaitSync(fence, GL_SYNC_FLUSH_COMMANDS_BIT, GL_TIMEOUT_IGNORED);
+
 		glViewport(_width / 2, 0, _width / 2, _height);
 		RenderModelsRight();
 
 		glFlush();
+		glFinish();
 
 		if (!_xrInitialized)
 		{
@@ -300,6 +313,19 @@ void Window::Run()
 			_xrInitialized = _xrSupport.CopyFrameBuffer();
         
 		SwapBuffers();
+
+		// FPS limiting
+		if (_targetFPS > 0.0f) {
+			float targetFrameTime = 1.0f / _targetFPS;
+			float frameEnd = (float)glfwGetTime();
+			float frameDuration = frameEnd - currentFrame;
+			
+			if (frameDuration < targetFrameTime) {
+				float sleepTime = targetFrameTime - frameDuration;
+				// Use Windows Sleep for more precise timing
+				Sleep((DWORD)(sleepTime * 1000.0f));
+			}
+		}
 	}
 
 	if (_xrInitialized)
@@ -533,6 +559,16 @@ void stereorizer::core::Window::RenderImGui() {
 	ImGui::Columns(1);
 	
 	ImGui::Separator();
+	
+	// FPS Controls
+	ImGui::Text("FPS Control");
+	float currentTargetFPS = GetTargetFPS();
+	if (ImGui::SliderFloat("Target FPS", &currentTargetFPS, 5.0f, 240.0f, "%.0f")) {
+		SetTargetFPS(currentTargetFPS);
+	}
+	ImGui::Text("Current FPS: %.1f", GetCurrentFPS());
+	
+	ImGui::Separator();
 	ImGui::Text("Inter-Pupillary Distance");
 	ImGui::TextWrapped("Adjust the distance between the left and right eye cameras for comfortable stereo viewing.");
 	
@@ -621,4 +657,18 @@ GLuint Window::GetRightViewColorTexture() const {
 		return _rightRenderer->GetColorTexture();
 	}
 	return 0;
+}
+
+
+float stereorizer::core::Window::GetTargetFPS() const
+{
+	return _targetFPS;
+}
+float stereorizer::core::Window::GetCurrentFPS() const
+{
+	return _currentFPS;
+}
+void stereorizer::core::Window::SetTargetFPS(float targetFPS)
+{
+	_targetFPS = targetFPS;
 }

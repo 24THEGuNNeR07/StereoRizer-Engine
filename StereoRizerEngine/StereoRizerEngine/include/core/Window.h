@@ -76,6 +76,11 @@ namespace stereorizer::core
 		GLuint GetRightViewDepthTexture() const;
 		GLuint GetRightViewColorTexture() const;
 
+		// FPS control
+		void SetTargetFPS(float targetFPS);
+		float GetTargetFPS() const;
+		float GetCurrentFPS() const;
+
 	private:
 		int _width;
 		int _height;
@@ -101,6 +106,14 @@ namespace stereorizer::core
 		float deltaTime = 0.0f;
 		float currentFrame = 0.0f;
 		float lastFrame = 0.0f;
+		
+		// FPS control
+		float _targetFPS = 60.0f;
+		float _currentFPS = 0.0f;
+		float _frameTimeAccumulator = 0.0f;
+		int _frameCount = 0;
+		float _lastFPSUpdate = 0.0f;
+		
 		void processInput(GLFWwindow* window);
 		void OnMouseMove(double xpos, double ypos);
 		static void mouse_callback(GLFWwindow* window, double xpos, double ypos);
