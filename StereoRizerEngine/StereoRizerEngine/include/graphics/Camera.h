@@ -40,6 +40,7 @@ namespace stereorizer::graphics
 
 		// Shader uniform upload
 		void UploadToShader(std::shared_ptr<Shader> shader) const;
+		void UploadToReprojectionShader(std::shared_ptr<Shader> shader) const;
 
 	private:
 		float _FOV;

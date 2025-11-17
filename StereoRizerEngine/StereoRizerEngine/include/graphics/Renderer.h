@@ -31,7 +31,7 @@ namespace stereorizer::graphics
 		void BeginDepthTextureRender();
 		void EndDepthTextureRender();
 		void RenderDepthVisualization(float nearPlane = 0.1f, float farPlane = 100.0f);
-		void RenderReprojection(const std::vector<std::shared_ptr<Model>>& models, Renderer& leftRenderer, float nearPlane = 0.1f, float farPlane = 100.0f);
+		void RenderReprojection(const std::vector<std::shared_ptr<Model>>& models, std::unique_ptr<Renderer>& leftRenderer);
 		GLuint GetDepthTexture() const { return _depthTexture; }
 		GLuint GetColorTexture() const { return _colorTexture; }
 		bool IsDepthTextureEnabled() const { return _depthTextureEnabled; }
@@ -48,11 +48,14 @@ namespace stereorizer::graphics
 		int _textureWidth = 0;
 		int _textureHeight = 0;
 		bool _isRightViewport = false;
+
+		bool texturesReadyForReprojection = false;
 		
 		// Full-screen quad for depth visualization
 		GLuint _quadVAO = 0;
 		GLuint _quadVBO = 0;
 		std::shared_ptr<Shader> _depthShader = nullptr;
+		std::shared_ptr<Shader> _reprojectionShader = nullptr;
 		
 		void SetupFullScreenQuad();
 		void CleanupFullScreenQuad();

@@ -101,3 +101,10 @@ void Camera::UploadToShader(std::shared_ptr<Shader> shader) const {
 	unsigned int viewLoc = glGetUniformLocation(shader->GetID(), "viewMatrix");
 	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(_viewMatrix));
 }
+
+void Camera::UploadToReprojectionShader(std::shared_ptr<Shader> shader) const {
+	unsigned int projLoc = glGetUniformLocation(shader->GetID(), "leftProjectionMatrix");
+	glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(_projectionMatrix));
+	unsigned int viewLoc = glGetUniformLocation(shader->GetID(), "leftViewMatrix");
+	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(_viewMatrix));
+}
