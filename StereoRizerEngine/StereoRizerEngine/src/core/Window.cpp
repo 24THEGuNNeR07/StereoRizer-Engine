@@ -225,7 +225,7 @@ void Window::RenderModelsRight()
 		float farPlane = camera ? camera->GetFarPlane() : 100.0f;
 
 		// Render the reprojection mask
-		_rightRenderer->RenderReprojection(_models, *_leftRenderer, nearPlane, farPlane);
+		_rightRenderer->RenderReprojection(_models, _leftRenderer);
 	}
 	else {
 		// Normal color rendering
