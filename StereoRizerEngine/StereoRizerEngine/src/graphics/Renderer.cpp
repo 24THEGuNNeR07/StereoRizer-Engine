@@ -34,11 +34,13 @@ void Renderer::Clear() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void Renderer::Draw(std::shared_ptr<Model> model) {
+void Renderer::Draw(std::shared_ptr<Model> model, bool bind) {
 	if (_camera)
 		_camera->UploadToShader(model->GetShader());
 	if (_light)
 		_light->UploadToShader(model->GetShader()->GetID(), "light");
+	if (bind)
+		model->BindShader();
 	model->Draw();
 }
 
@@ -182,12 +184,12 @@ void Renderer::EndTextureRender() {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void Renderer::RenderToTextures(const std::vector<std::shared_ptr<Model>>& models) {
+void Renderer::RenderToTextures(const std::vector<std::shared_ptr<Model>>& models, bool bind) {
 
 	BeginTextureRender();
 	for (const auto& model : models) {
 		if (model) {
-			Draw(model);
+			Draw(model, bind);
 		}
 	}
 	EndTextureRender();

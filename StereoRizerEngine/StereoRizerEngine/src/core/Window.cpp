@@ -167,7 +167,7 @@ void Window::RenderModelsLeft()
 {
 	if (!_leftRenderer) return;
 	
-	_leftRenderer->RenderToTextures(_models);
+	_leftRenderer->RenderToTextures(_models, true);
 	
 	if (_leftViewDisplayMode == ViewDisplayMode::Color) {
 		_leftRenderer->RenderColorVisualization();
@@ -185,9 +185,60 @@ void Window::RenderModelsRight()
 {
 	if (!_rightRenderer) return;
 
-	_rightRenderer->RenderToTextures(_models);
+	if (_rightViewDisplayMode == ViewDisplayMode::ReprojectionMask) {
+		
+		if (!_reprojectionShader) {
+			try {
+				_reprojectionShader = std::make_shared<Shader>("resources/shaders/Reprojection.shader");
+			}
+			catch (const std::exception& e) {
+				LOG_ERROR(std::string("Failed to load reprojection shader: ") + e.what());
+				return;
+			}
+		}
 
-	if (_rightViewDisplayMode == ViewDisplayMode::Color) {
+		std::vector<std::shared_ptr<Model>> reprojectionModels;
+		for (const auto& model : _models) {
+			if (model) {
+				// Create a copy of the model for reprojection
+				auto reprojModel = std::make_shared<Model>(*model);
+				reprojModel->SetShader(_reprojectionShader);
+				reprojectionModels.push_back(reprojModel);
+			}
+		}
+
+		_reprojectionShader->ReloadIfChanged();
+		_reprojectionShader->Bind();
+
+		// Upload camera matrices
+		auto leftCamera = _leftRenderer->GetCamera();
+
+		if (leftCamera) {
+			leftCamera->UploadToReprojectionShader(_reprojectionShader);
+		}
+
+		// Bind left renderer textures
+		GLuint depthTexture = _leftRenderer->GetDepthTexture();
+		GLuint colorTexture = _leftRenderer->GetColorTexture();
+
+		if (depthTexture != 0 && colorTexture != 0) {
+			// Left depth texture (texture unit 0)
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, depthTexture);
+			glUniform1i(glGetUniformLocation(_reprojectionShader->GetID(), "leftDepthTexture"), 0);
+
+			// Left color texture (texture unit 1)
+			glActiveTexture(GL_TEXTURE1);
+			glBindTexture(GL_TEXTURE_2D, colorTexture);
+			glUniform1i(glGetUniformLocation(_reprojectionShader->GetID(), "leftColorTexture"), 1);
+		}
+
+		_rightRenderer->RenderToTextures(reprojectionModels, false);
+	}
+	else
+		_rightRenderer->RenderToTextures(_models, true);
+
+	if (_rightViewDisplayMode == ViewDisplayMode::Color || _rightViewDisplayMode == ViewDisplayMode::ReprojectionMask) {
 		_rightRenderer->RenderColorVisualization();
 	} 
 	else if (_rightViewDisplayMode == ViewDisplayMode::Depth && _rightRenderer->IsDepthTextureEnabled()) {
@@ -196,11 +247,6 @@ void Window::RenderModelsRight()
 		float farPlane = camera ? camera->GetFarPlane() : 100.0f;
 
 		_rightRenderer->RenderDepthVisualization(nearPlane, farPlane);
-	}
-	else if (_rightViewDisplayMode == ViewDisplayMode::ReprojectionMask && 
-			 _leftRenderer->IsDepthTextureEnabled()) {
-
-		_rightRenderer->RenderReprojection(_models, _leftRenderer);
 	}
 }
 
