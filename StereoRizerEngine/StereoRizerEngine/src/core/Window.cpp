@@ -195,49 +195,33 @@ void Window::RenderModelsRight()
 	if (!_rightRenderer) return;
 
 	if (_rightViewDisplayMode == ViewDisplayMode::ReprojectionMask) {
-		
-		/*if (!_reprojectionShader) {
-			try {
-				_reprojectionShader = std::make_shared<Shader>("resources/shaders/Flat.shader");
-			}
-			catch (const std::exception& e) {
-				LOG_ERROR(std::string("Failed to load reprojection shader: ") + e.what());
-				return;
-			}
-		}*/
+		std::shared_ptr<Shader> reprojectionShader;
 
-		for (const auto& model : _models) {
-			if (model) {
-				model->GetShader()->EnableDefine("USE_REPROJECTION");
-				model->GetShader()->RecompileWithDefines();
-			}
-		}
-
-		//_reprojectionShader->ReloadIfChanged();
-		//_reprojectionShader->Bind();
+		_models[0]->GetShader()->EnableDefine("USE_REPROJECTION");
+		_models[0]->GetShader()->RecompileWithDefines();
 
 		//// Upload camera matrices
-		//auto leftCamera = _leftRenderer->GetCamera();
+		auto leftCamera = _leftRenderer->GetCamera();
 
-		//if (leftCamera) {
-		//	leftCamera->UploadToReprojectionShader(_reprojectionShader);
-		//}
+		if (leftCamera) {
+			leftCamera->UploadToReprojectionShader(_models[0]->GetShader());
+		}
 
 		//// Bind left renderer textures
-		//GLuint depthTexture = _leftRenderer->GetDepthTexture();
-		//GLuint colorTexture = _leftRenderer->GetColorTexture();
+		GLuint depthTexture = _leftRenderer->GetDepthTexture();
+		GLuint colorTexture = _leftRenderer->GetColorTexture();
 
-		//if (depthTexture != 0 && colorTexture != 0) {
-		//	// Left depth texture (texture unit 0)
-		//	glActiveTexture(GL_TEXTURE0);
-		//	glBindTexture(GL_TEXTURE_2D, depthTexture);
-		//	glUniform1i(glGetUniformLocation(_reprojectionShader->GetID(), "leftDepthTexture"), 0);
+		if (depthTexture != 0 && colorTexture != 0) {
+			// Left depth texture (texture unit 0)
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, depthTexture);
+			glUniform1i(glGetUniformLocation(_models[0]->GetShader()->GetID(), "leftDepthTexture"), 0);
 
-		//	// Left color texture (texture unit 1)
-		//	glActiveTexture(GL_TEXTURE1);
-		//	glBindTexture(GL_TEXTURE_2D, colorTexture);
-		//	glUniform1i(glGetUniformLocation(_reprojectionShader->GetID(), "leftColorTexture"), 1);
-		//}
+			// Left color texture (texture unit 1)
+			glActiveTexture(GL_TEXTURE1);
+			glBindTexture(GL_TEXTURE_2D, colorTexture);
+			glUniform1i(glGetUniformLocation(_models[0]->GetShader()->GetID(), "leftColorTexture"), 1);
+		}
 
 	}
 

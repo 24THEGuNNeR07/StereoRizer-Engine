@@ -11,6 +11,7 @@ uniform mat4 projectionMatrix;
 out vec3 Normal;
 out vec3 FragPos;
 out vec3 WorldNormal;
+out vec4 ClipSpacePos;
 
 void main()
 {
@@ -19,6 +20,8 @@ void main()
     Normal = WorldNormal;
     
     gl_Position = projectionMatrix * viewMatrix * vec4(FragPos, 1.0);
+
+    ClipSpacePos = gl_Position;
 }
 
 #shader fragment
@@ -45,6 +48,22 @@ uniform vec3 materialColor; // Material diffuse color
 in vec3 Normal;
 in vec3 FragPos;
 in vec3 WorldNormal;
+in vec4 ClipSpacePos;
+
+#ifdef USE_REPROJECTION
+uniform sampler2D leftDepthTexture;    // Depth map from left renderer
+uniform sampler2D leftColorTexture;    // Color map from left renderer  
+
+// Camera matrices for left renderer
+uniform mat4 leftViewMatrix;           // Left camera view matrix
+uniform mat4 leftProjectionMatrix;     // Left camera projection matrix
+
+uniform mat4 viewMatrix;               // Right camera view matrix
+uniform mat4 projectionMatrix;         // Right camera projection matrix
+uniform mat4 modelMatrix;
+#endif
+
+const vec3 MISMATCH_COLOR = vec3(1.0, 0.078, 0.576); // Pink color for mismatches
 
 vec3 calculateDirectionalLight(Light light, vec3 normal, vec3 fragPos) {
     // Calculate light direction (pointing towards the light)
@@ -89,6 +108,21 @@ vec3 calculateSpotLight(Light light, vec3 normal, vec3 fragPos) {
     return light.color * light.intensity * diff * intensity * attenuation;
 }
 
+vec2 ProjectToScreen(vec3 worldPos, mat4 viewMatrix, mat4 projectionMatrix)
+{
+    // Transform to view space
+    vec4 viewSpacePos = viewMatrix * vec4(worldPos, 1.0);
+    
+    // Transform to clip space
+    vec4 clipSpacePos = projectionMatrix * viewSpacePos;
+    
+    // Perspective divide
+    vec3 ndcPos = clipSpacePos.xyz / clipSpacePos.w;
+    
+    // Convert to screen coordinates
+    return ndcPos.xy * 0.5 + 0.5;
+}
+
 void main()
 {
     vec3 norm = normalize(Normal);
@@ -116,7 +150,43 @@ void main()
     vec3 finalColor = (ambient + lightContribution) * materialColor;
     
 #ifdef USE_REPROJECTION
-	color = vec4(1.0, 0.0, 1.0, 1.0); // Magenta for reprojection debugging
+    vec4 clipPos = ClipSpacePos;
+    
+    // Step 2: Convert to NDC by perspective divide
+    vec3 ndcPos = clipPos.xyz / clipPos.w;
+    
+    // Step 3: Convert NDC to screen coordinates [0,1]
+    vec2 rightScreenCoord = ndcPos.xy * 0.5 + 0.5;
+    float rightDepthValue = ndcPos.z * 0.5 + 0.5; // Convert Z from [-1,1] to [0,1]
+    
+    // Step 4: Reconstruct world position using inverse matrices
+    mat4 invViewMatrix = inverse(viewMatrix);
+    mat4 invProjectionMatrix = inverse(projectionMatrix);
+    // Fragment shader
+    vec4 viewPos = inverse(projectionMatrix) * clipPos;
+    viewPos /= viewPos.w; // divide by w to go from clip to view space
+
+    vec4 worldPos = inverse(viewMatrix) * viewPos;
+    vec3 worldPosition = worldPos.xyz / worldPos.w;
+    
+    // Step 5: Project world position to LEFT camera screen coordinates
+    vec2 leftScreenCoord = ProjectToScreen(worldPosition, leftViewMatrix, leftProjectionMatrix);
+
+    float leftDepthValue = texture(leftDepthTexture, leftScreenCoord).r;
+    
+    // Skip if no valid depth in left camera
+    if (leftDepthValue >= 1.0) {
+        color = vec4(MISMATCH_COLOR, 1.0);
+        return;
+    }
+
+    if (abs(leftDepthValue - rightDepthValue) <= 0.002) {
+        vec4 leftColorValue = texture(leftColorTexture, leftScreenCoord);
+        color = leftColorValue;
+    } else {
+        // Depth mismatch - render pinkrightScreenCoord
+        color = vec4(MISMATCH_COLOR, 1.0);
+    }
 #else
     color = vec4(finalColor, 1.0);
 #endif
