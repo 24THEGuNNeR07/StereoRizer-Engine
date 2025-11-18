@@ -6,7 +6,10 @@
 using namespace stereorizer::graphics;
 
 Renderer::Renderer()
-	: _camera(std::make_shared<Camera>(45.0f, 4.0f / 3.0f, 0.1f, 10.0f)) {}
+	: _camera(std::make_shared<Camera>(45.0f, 4.0f / 3.0f, 0.1f, 10.0f)) {
+	// Framebuffer and textures are created on-demand in BeginDepthTextureRender
+	// This avoids OpenGL calls during construction when context might not be ready
+}
 
 Renderer::~Renderer() {
 	if (_framebuffer != 0) {
@@ -69,6 +72,67 @@ void Renderer::SetupDepthTexture(int width, int height, bool isRightViewport) {
 	LOG_INFO("Target size: " + std::to_string(width) + "x" + std::to_string(height));
 }
 
+void Renderer::CreateColorTexture() {
+	glGenTextures(1, &_colorTexture);
+	glBindTexture(GL_TEXTURE_2D, _colorTexture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, _textureWidth, _textureHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+}
+
+void Renderer::CreateDepthTexture() {
+	glGenTextures(1, &_depthTexture);
+	glBindTexture(GL_TEXTURE_2D, _depthTexture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, _textureWidth, _textureHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
+}
+
+void Renderer::CreateFramebuffer() {
+	glGenFramebuffers(1, &_framebuffer);
+	glBindFramebuffer(GL_FRAMEBUFFER, _framebuffer);
+	
+	// Create and attach textures
+	CreateColorTexture();
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _colorTexture, 0);
+	
+	CreateDepthTexture();
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, _depthTexture, 0);
+	
+	// Ensure we have both color and depth attachments
+	GLenum drawBuffers[] = { GL_COLOR_ATTACHMENT0 };
+	glDrawBuffers(1, drawBuffers);
+	
+	// Check framebuffer completeness
+	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if (status != GL_FRAMEBUFFER_COMPLETE) {
+		LOG_ERROR("Framebuffer not complete for depth texture rendering! Status: " + std::to_string(status));
+		// Clean up failed resources
+		if (_framebuffer != 0) {
+			glDeleteFramebuffers(1, &_framebuffer);
+			_framebuffer = 0;
+		}
+		if (_colorTexture != 0) {
+			glDeleteTextures(1, &_colorTexture);
+			_colorTexture = 0;
+		}
+		if (_depthTexture != 0) {
+			glDeleteTextures(1, &_depthTexture);
+			_depthTexture = 0;
+		}
+		throw std::runtime_error("Failed to create framebuffer");
+	} else {
+		LOG_INFO("Depth texture framebuffer created successfully");
+		LOG_INFO("Color texture: " + std::to_string(_colorTexture) + ", Depth texture: " + std::to_string(_depthTexture));
+		LOG_INFO("Framebuffer size: " + std::to_string(_textureWidth) + "x" + std::to_string(_textureHeight));
+	}
+}
+
 void Renderer::BeginDepthTextureRender() {
 	// Check if depth texture setup was called (deferred creation pattern)
 	if (_textureWidth == 0 || _textureHeight == 0) return;
@@ -78,59 +142,12 @@ void Renderer::BeginDepthTextureRender() {
 		// Save current OpenGL state
 		OpenGLState savedState = SaveOpenGLState();
 		
-		// Create framebuffer
-		glGenFramebuffers(1, &_framebuffer);
-		glBindFramebuffer(GL_FRAMEBUFFER, _framebuffer);
-
-		// Create color texture
-		glGenTextures(1, &_colorTexture);
-		glBindTexture(GL_TEXTURE_2D, _colorTexture);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, _textureWidth, _textureHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _colorTexture, 0);
-
-		// Create depth texture
-		glGenTextures(1, &_depthTexture);
-		glBindTexture(GL_TEXTURE_2D, _depthTexture);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, _textureWidth, _textureHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_NONE);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, _depthTexture, 0);
-
-		// Ensure we have both color and depth attachments
-		GLenum drawBuffers[] = { GL_COLOR_ATTACHMENT0 };
-		glDrawBuffers(1, drawBuffers);
-		
-		// Check framebuffer completeness
-		GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-		if (status != GL_FRAMEBUFFER_COMPLETE) {
-			LOG_ERROR("Framebuffer not complete for depth texture rendering! Status: " + std::to_string(status));
-			// Clean up failed resources
-			if (_framebuffer != 0) {
-				glDeleteFramebuffers(1, &_framebuffer);
-				_framebuffer = 0;
-			}
-			if (_colorTexture != 0) {
-				glDeleteTextures(1, &_colorTexture);
-				_colorTexture = 0;
-			}
-			if (_depthTexture != 0) {
-				glDeleteTextures(1, &_depthTexture);
-				_depthTexture = 0;
-			}
-			// Restore state and return
+		try {
+			CreateFramebuffer();
+		} catch (const std::runtime_error& e) {
+			// Restore state and return on failure
 			RestoreOpenGLState(savedState);
 			return;
-		} else {
-			LOG_INFO("Depth texture framebuffer created on first use");
-			LOG_INFO("Color texture: " + std::to_string(_colorTexture) + ", Depth texture: " + std::to_string(_depthTexture));
-			LOG_INFO("Framebuffer size: " + std::to_string(_textureWidth) + "x" + std::to_string(_textureHeight));
 		}
 		
 		// Restore state after creation
@@ -153,21 +170,16 @@ void Renderer::BeginDepthTextureRender() {
 void Renderer::EndDepthTextureRender() {
 	if (_depthTexture == 0) return;
 	
-	// Check framebuffer status before finishing
 	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 	if (status != GL_FRAMEBUFFER_COMPLETE) {
 		LOG_ERROR("Framebuffer not complete when ending render! Status: " + std::to_string(status));
 	}
-	
-	// Ensure all framebuffer operations are complete before switching back to default framebuffer
-	// This is critical for ensuring textures are ready for subsequent reads
+
 	glFlush();
-	glFinish(); // Add more aggressive sync to ensure texture is completely written
+	glFinish();
 	
 	glViewport(_isRightViewport ? _textureWidth : 0, 0, _textureWidth, _textureHeight);
-	// Restore default framebuffer
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	// Note: Viewport will be set by the caller (Window class) based on which view is being rendered
 }
 
 void Renderer::RenderDepthTexture(const std::vector<std::shared_ptr<Model>>& models) {

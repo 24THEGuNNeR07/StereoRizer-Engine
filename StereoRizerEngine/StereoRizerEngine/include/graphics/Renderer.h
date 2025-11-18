@@ -67,6 +67,11 @@ namespace stereorizer::graphics
 		void SetupFullScreenQuad();
 		void CleanupFullScreenQuad();
 		
+		// Texture and framebuffer creation methods
+		void CreateColorTexture();
+		void CreateDepthTexture();
+		void CreateFramebuffer();
+		
 		// OpenGL state management
 		OpenGLState SaveOpenGLState();
 		void RestoreOpenGLState(const OpenGLState& state);
