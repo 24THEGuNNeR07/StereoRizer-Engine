@@ -129,5 +129,6 @@ namespace stereorizer::core
 		ViewDisplayMode _rightViewDisplayMode = ViewDisplayMode::Color;
 
 		std::shared_ptr<stereorizer::graphics::Shader> _reprojectionShader = nullptr;
+		std::shared_ptr<stereorizer::graphics::Shader> _standardShader = nullptr;
 	};
 }

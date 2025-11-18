@@ -56,13 +56,12 @@ void Model::Draw() const
 	if (colorLoc != -1)
 		glUniform3fv(colorLoc, 1, glm::value_ptr(_color));
 
-	_mesh->Draw();
-}
-
-void stereorizer::graphics::Model::BindShader() const
-{
 	_shader->ReloadIfChanged();
 	_shader->Bind();
+
+	_mesh->Draw();
+
+	//_shader->Unbind();
 }
 
 // --- Transformations ---

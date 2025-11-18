@@ -115,5 +115,9 @@ void main()
     // Combine with material color
     vec3 finalColor = (ambient + lightContribution) * materialColor;
     
+#ifdef USE_REPROJECTION
+	color = vec4(1.0, 0.0, 1.0, 1.0); // Magenta for reprojection debugging
+#else
     color = vec4(finalColor, 1.0);
+#endif
 }

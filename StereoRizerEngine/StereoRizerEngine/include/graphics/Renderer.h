@@ -20,7 +20,7 @@ namespace stereorizer::graphics
 		std::shared_ptr<Camera> GetCamera();
 
 		void Clear();
-		void Draw(std::shared_ptr<Model> model, bool bind);
+		void Draw(std::shared_ptr<Model> model);
 		
 		// Light management
 		void SetLight(std::shared_ptr<Light> light);
@@ -30,10 +30,10 @@ namespace stereorizer::graphics
 		void SetupDepthTexture(int width, int height, bool isRightViewport = false);
 		void BeginTextureRender();
 		void EndTextureRender();
-		void RenderToTextures(const std::vector<std::shared_ptr<Model>>& models, bool bind);
+		void RenderToTextures(const std::vector<std::shared_ptr<Model>>& models);
 		void RenderDepthVisualization(float nearPlane = 0.1f, float farPlane = 100.0f);
 		void RenderColorVisualization();
-		void RenderReprojection(const std::vector<std::shared_ptr<Model>>& models, std::unique_ptr<Renderer>& leftRenderer);
+
 		GLuint GetDepthTexture() const { return _depthTexture; }
 		GLuint GetColorTexture() const { return _colorTexture; }
 		bool IsDepthTextureEnabled() const { return _depthTexture != 0; }

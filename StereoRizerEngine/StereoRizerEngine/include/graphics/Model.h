@@ -24,7 +24,6 @@ namespace stereorizer::graphics
 		void SetShader(std::shared_ptr<Shader> shader) noexcept;
 		const glm::mat4& GetTransformMatrix() const noexcept { return _transform; }
 		void Draw() const;
-		void BindShader() const;
 
 		// Transformations
 		void Translate(const glm::vec3& offset);

@@ -107,6 +107,8 @@ void Window::AddModel(std::shared_ptr<Model> model)
 	if (!model) return;
 	if (std::find(_models.begin(), _models.end(), model) == _models.end())
 		_models.push_back(model);
+
+	_standardShader = model->GetShader();
 }
 
 void Window::RemoveModel(std::shared_ptr<Model> model)
@@ -166,8 +168,15 @@ bool Window::UpdateXRViews()
 void Window::RenderModelsLeft()
 {
 	if (!_leftRenderer) return;
+
+	for (const auto& model : _models) {
+		if (model) {
+			model->GetShader()->DisableDefine("USE_REPROJECTION");
+			model->GetShader()->RecompileWithDefines();
+		}
+	}
 	
-	_leftRenderer->RenderToTextures(_models, true);
+	_leftRenderer->RenderToTextures(_models);
 	
 	if (_leftViewDisplayMode == ViewDisplayMode::Color) {
 		_leftRenderer->RenderColorVisualization();
@@ -187,56 +196,52 @@ void Window::RenderModelsRight()
 
 	if (_rightViewDisplayMode == ViewDisplayMode::ReprojectionMask) {
 		
-		if (!_reprojectionShader) {
+		/*if (!_reprojectionShader) {
 			try {
-				_reprojectionShader = std::make_shared<Shader>("resources/shaders/Reprojection.shader");
+				_reprojectionShader = std::make_shared<Shader>("resources/shaders/Flat.shader");
 			}
 			catch (const std::exception& e) {
 				LOG_ERROR(std::string("Failed to load reprojection shader: ") + e.what());
 				return;
 			}
-		}
+		}*/
 
-		std::vector<std::shared_ptr<Model>> reprojectionModels;
 		for (const auto& model : _models) {
 			if (model) {
-				// Create a copy of the model for reprojection
-				auto reprojModel = std::make_shared<Model>(*model);
-				reprojModel->SetShader(_reprojectionShader);
-				reprojectionModels.push_back(reprojModel);
+				model->GetShader()->EnableDefine("USE_REPROJECTION");
+				model->GetShader()->RecompileWithDefines();
 			}
 		}
 
-		_reprojectionShader->ReloadIfChanged();
-		_reprojectionShader->Bind();
+		//_reprojectionShader->ReloadIfChanged();
+		//_reprojectionShader->Bind();
 
-		// Upload camera matrices
-		auto leftCamera = _leftRenderer->GetCamera();
+		//// Upload camera matrices
+		//auto leftCamera = _leftRenderer->GetCamera();
 
-		if (leftCamera) {
-			leftCamera->UploadToReprojectionShader(_reprojectionShader);
-		}
+		//if (leftCamera) {
+		//	leftCamera->UploadToReprojectionShader(_reprojectionShader);
+		//}
 
-		// Bind left renderer textures
-		GLuint depthTexture = _leftRenderer->GetDepthTexture();
-		GLuint colorTexture = _leftRenderer->GetColorTexture();
+		//// Bind left renderer textures
+		//GLuint depthTexture = _leftRenderer->GetDepthTexture();
+		//GLuint colorTexture = _leftRenderer->GetColorTexture();
 
-		if (depthTexture != 0 && colorTexture != 0) {
-			// Left depth texture (texture unit 0)
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, depthTexture);
-			glUniform1i(glGetUniformLocation(_reprojectionShader->GetID(), "leftDepthTexture"), 0);
+		//if (depthTexture != 0 && colorTexture != 0) {
+		//	// Left depth texture (texture unit 0)
+		//	glActiveTexture(GL_TEXTURE0);
+		//	glBindTexture(GL_TEXTURE_2D, depthTexture);
+		//	glUniform1i(glGetUniformLocation(_reprojectionShader->GetID(), "leftDepthTexture"), 0);
 
-			// Left color texture (texture unit 1)
-			glActiveTexture(GL_TEXTURE1);
-			glBindTexture(GL_TEXTURE_2D, colorTexture);
-			glUniform1i(glGetUniformLocation(_reprojectionShader->GetID(), "leftColorTexture"), 1);
-		}
+		//	// Left color texture (texture unit 1)
+		//	glActiveTexture(GL_TEXTURE1);
+		//	glBindTexture(GL_TEXTURE_2D, colorTexture);
+		//	glUniform1i(glGetUniformLocation(_reprojectionShader->GetID(), "leftColorTexture"), 1);
+		//}
 
-		_rightRenderer->RenderToTextures(reprojectionModels, false);
 	}
-	else
-		_rightRenderer->RenderToTextures(_models, true);
+
+	_rightRenderer->RenderToTextures(_models);
 
 	if (_rightViewDisplayMode == ViewDisplayMode::Color || _rightViewDisplayMode == ViewDisplayMode::ReprojectionMask) {
 		_rightRenderer->RenderColorVisualization();

@@ -12,6 +12,19 @@ Shader::Shader(const std::string& filepath)
 	_rendererID = CreateShader(source.VertexSource, source.FragmentSource);
 }
 
+Shader::Shader(const std::string& filepath, const std::unordered_map<std::string, std::string>& defines)
+{
+	_filePath = filepath;
+	_defines = defines;
+	_lastWriteTime = GetLastWriteTime();
+
+	ShaderProgramSource source = ParseShader(filepath);
+	// Inject defines into both vertex and fragment shaders
+	source.VertexSource = InjectDefines(source.VertexSource);
+	source.FragmentSource = InjectDefines(source.FragmentSource);
+	_rendererID = CreateShader(source.VertexSource, source.FragmentSource);
+}
+
 Shader::~Shader()
 {
 	glDeleteProgram(_rendererID);
@@ -22,6 +35,7 @@ Shader::Shader(Shader&& other) noexcept
 	_rendererID = other._rendererID;
 	_filePath = std::move(other._filePath);
 	_lastWriteTime = other._lastWriteTime;
+	_defines = std::move(other._defines);
 
 	other._rendererID = 0;
 }
@@ -33,6 +47,7 @@ Shader& Shader::operator=(Shader&& other) noexcept
 		_rendererID = other._rendererID;
 		_filePath = std::move(other._filePath);
 		_lastWriteTime = other._lastWriteTime;
+		_defines = std::move(other._defines);
 
 		other._rendererID = 0;
 	}
@@ -57,6 +72,11 @@ bool Shader::ReloadIfChanged()
 	LOG_INFO("Reloading shader...");
 
 		ShaderProgramSource newSource = ParseShader(_filePath);
+		// Inject defines if they exist
+		if (!_defines.empty()) {
+			newSource.VertexSource = InjectDefines(newSource.VertexSource);
+			newSource.FragmentSource = InjectDefines(newSource.FragmentSource);
+		}
 		unsigned int newShader = CreateShader(newSource.VertexSource, newSource.FragmentSource);
 		if (newShader != 0) {
 			glDeleteProgram(_rendererID);
@@ -148,5 +168,97 @@ fs::file_time_type Shader::GetLastWriteTime()
 	catch (fs::filesystem_error& e) {
 		LOG_ERROR(std::string("Error getting last write time for shader file: ") + e.what());
 		return fs::file_time_type::min();
+	}
+}
+
+std::string Shader::InjectDefines(const std::string& source)
+{
+	if (_defines.empty()) {
+		return source;
+	}
+
+	std::stringstream ss;
+	std::istringstream sourceStream(source);
+	std::string line;
+	bool versionFound = false;
+
+	// Read through the source line by line
+	while (std::getline(sourceStream, line)) {
+		// Add the line first
+		ss << line << "\n";
+
+		// If this is the version directive, inject defines after it
+		if (!versionFound && line.find("#version") != std::string::npos) {
+			versionFound = true;
+			// Inject all defines after the version line
+			for (const auto& define : _defines) {
+				ss << "#define " << define.first;
+				if (!define.second.empty()) {
+					ss << " " << define.second;
+				}
+				ss << "\n";
+			}
+		}
+	}
+
+	// If no version directive was found, prepend defines at the beginning
+	if (!versionFound) {
+		std::string result;
+		for (const auto& define : _defines) {
+			result += "#define " + define.first;
+			if (!define.second.empty()) {
+				result += " " + define.second;
+			}
+			result += "\n";
+		}
+		result += source;
+		return result;
+	}
+
+	return ss.str();
+}
+
+void Shader::EnableDefine(const std::string& name, const std::string& value)
+{
+	_defines[name] = value;
+}
+
+void Shader::DisableDefine(const std::string& name)
+{
+	auto it = _defines.find(name);
+	if (it != _defines.end()) {
+		_defines.erase(it);
+	}
+}
+
+bool Shader::HasDefine(const std::string& name) const
+{
+	return _defines.find(name) != _defines.end();
+}
+
+void Shader::ClearAllDefines()
+{
+	_defines.clear();
+}
+
+bool Shader::RecompileWithDefines()
+{
+	ShaderProgramSource source = ParseShader(_filePath);
+	// Apply defines if they exist
+	if (!_defines.empty()) {
+		source.VertexSource = InjectDefines(source.VertexSource);
+		source.FragmentSource = InjectDefines(source.FragmentSource);
+	}
+
+	unsigned int newShader = CreateShader(source.VertexSource, source.FragmentSource);
+	if (newShader != 0) {
+		glDeleteProgram(_rendererID);
+		_rendererID = newShader;
+		glUseProgram(_rendererID);
+		return true;
+	}
+	else {
+		LOG_ERROR("Failed to recompile shader with defines");
+		return false;
 	}
 }
