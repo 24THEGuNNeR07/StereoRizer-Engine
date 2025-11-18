@@ -133,7 +133,7 @@ void Renderer::CreateFramebuffer() {
 	}
 }
 
-void Renderer::BeginDepthTextureRender() {
+void Renderer::BeginTextureRender() {
 	// Check if depth texture setup was called (deferred creation pattern)
 	if (_textureWidth == 0 || _textureHeight == 0) return;
 	
@@ -167,7 +167,7 @@ void Renderer::BeginDepthTextureRender() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void Renderer::EndDepthTextureRender() {
+void Renderer::EndTextureRender() {
 	if (_depthTexture == 0) return;
 	
 	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -182,15 +182,15 @@ void Renderer::EndDepthTextureRender() {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void Renderer::RenderDepthTexture(const std::vector<std::shared_ptr<Model>>& models) {
+void Renderer::RenderToTextures(const std::vector<std::shared_ptr<Model>>& models) {
 
-	BeginDepthTextureRender();
+	BeginTextureRender();
 	for (const auto& model : models) {
 		if (model) {
 			Draw(model);
 		}
 	}
-	EndDepthTextureRender();
+	EndTextureRender();
 }
 
 void Renderer::SetupFullScreenQuad() {
@@ -229,12 +229,19 @@ void Renderer::SetupFullScreenQuad() {
 	glBindVertexArray(previousVAO);
 	glBindBuffer(GL_ARRAY_BUFFER, previousArrayBuffer);
 	
-	// Load depth visualization shader
+	// Load visualization shaders
 	try {
 		_depthShader = std::make_shared<Shader>("resources/shaders/DepthVisualization.shader");
 	} catch (const std::exception& e) {
 		LOG_ERROR(std::string("Failed to load depth visualization shader: ") + e.what());
 		_depthShader = nullptr;
+	}
+	
+	try {
+		_colorShader = std::make_shared<Shader>("resources/shaders/ColorVisualization.shader");
+	} catch (const std::exception& e) {
+		LOG_ERROR(std::string("Failed to load color visualization shader: ") + e.what());
+		_colorShader = nullptr;
 	}
 }
 
@@ -248,6 +255,7 @@ void Renderer::CleanupFullScreenQuad() {
 		_quadVBO = 0;
 	}
 	_depthShader = nullptr;
+	_colorShader = nullptr;
 }
 
 Renderer::OpenGLState Renderer::SaveOpenGLState() {
@@ -309,6 +317,62 @@ void Renderer::RenderDepthVisualization(float nearPlane, float farPlane) {
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, _depthTexture);
 	glUniform1i(glGetUniformLocation(_depthShader->GetID(), "depthTexture"), 0);
+	
+	// Render full-screen quad
+	glBindVertexArray(_quadVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 6);
+	
+	// Restore previous OpenGL state completely
+	glUseProgram(previousProgram);
+	glBindVertexArray(previousVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, previousArrayBuffer);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, previousTexture);
+	glActiveTexture(previousActiveTexture);
+	
+	// Restore depth testing state
+	if (depthTestEnabled) {
+		glEnable(GL_DEPTH_TEST);
+	}
+}
+
+void Renderer::RenderColorVisualization() {
+	if (_colorTexture == 0) {
+		LOG_ERROR("Cannot render color visualization: color texture not available");
+		return;
+	}
+	
+	// Setup full-screen quad if not already done
+	if (_quadVAO == 0) {
+		SetupFullScreenQuad();
+	}
+	
+	if (!_colorShader || _quadVAO == 0) {
+		LOG_ERROR("Color visualization resources not available");
+		return;
+	}
+	
+	// Save current OpenGL state
+	GLint previousVAO, previousTexture, previousActiveTexture, previousProgram, previousArrayBuffer;
+	GLboolean depthTestEnabled = glIsEnabled(GL_DEPTH_TEST);
+	glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &previousVAO);
+	glGetIntegerv(GL_CURRENT_PROGRAM, &previousProgram);
+	glGetIntegerv(GL_ACTIVE_TEXTURE, &previousActiveTexture);
+	glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &previousArrayBuffer);
+	glActiveTexture(GL_TEXTURE0);
+	glGetIntegerv(GL_TEXTURE_BINDING_2D, &previousTexture);
+	
+	// Disable depth testing for full-screen quad
+	glDisable(GL_DEPTH_TEST);
+	
+	// Bind color shader
+	_colorShader->ReloadIfChanged();
+	_colorShader->Bind();
+	
+	// Bind color texture
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, _colorTexture);
+	glUniform1i(glGetUniformLocation(_colorShader->GetID(), "colorTexture"), 0);
 	
 	// Render full-screen quad
 	glBindVertexArray(_quadVAO);

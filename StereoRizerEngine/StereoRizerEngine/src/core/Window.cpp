@@ -167,24 +167,17 @@ void Window::RenderModelsLeft()
 {
 	if (!_leftRenderer) return;
 	
-	// Always render to depth texture framebuffer first
-	_leftRenderer->RenderDepthTexture(_models);
+	_leftRenderer->RenderToTextures(_models);
 	
-	// Render to the current viewport (left half of screen)
-	// Display either normal color rendering or depth visualization based on mode
-	if (_leftViewDisplayMode == ViewDisplayMode::Depth && _leftRenderer->IsDepthTextureEnabled()) {
+	if (_leftViewDisplayMode == ViewDisplayMode::Color) {
+		_leftRenderer->RenderColorVisualization();
+	} 
+	else if (_leftViewDisplayMode == ViewDisplayMode::Depth && _leftRenderer->IsDepthTextureEnabled()) {
 		auto camera = _leftRenderer->GetCamera();
 		float nearPlane = camera ? camera->GetNearPlane() : 0.1f;
 		float farPlane = camera ? camera->GetFarPlane() : 100.0f;
 
-		// Render the depth texture as a full-screen visualization
 		_leftRenderer->RenderDepthVisualization(nearPlane, farPlane);
-	} else {
-		// Normal color rendering
-		for (auto& m : _models) {
-			if (m)
-				_leftRenderer->Draw(m);
-		}
 	}
 }
 
@@ -192,34 +185,22 @@ void Window::RenderModelsRight()
 {
 	if (!_rightRenderer) return;
 
-	// Always render to depth texture framebuffer first
-	_rightRenderer->RenderDepthTexture(_models);
+	_rightRenderer->RenderToTextures(_models);
 
-	// Render to the current viewport (right half of screen)
-	// Display based on selected mode: normal color, depth visualization, or reprojection mask
-	if (_rightViewDisplayMode == ViewDisplayMode::Depth && _rightRenderer->IsDepthTextureEnabled()) {
+	if (_rightViewDisplayMode == ViewDisplayMode::Color) {
+		_rightRenderer->RenderColorVisualization();
+	} 
+	else if (_rightViewDisplayMode == ViewDisplayMode::Depth && _rightRenderer->IsDepthTextureEnabled()) {
 		auto camera = _rightRenderer->GetCamera();
 		float nearPlane = camera ? camera->GetNearPlane() : 0.1f;
 		float farPlane = camera ? camera->GetFarPlane() : 100.0f;
 
-		// Render the depth texture as a full-screen visualization
 		_rightRenderer->RenderDepthVisualization(nearPlane, farPlane);
 	}
 	else if (_rightViewDisplayMode == ViewDisplayMode::ReprojectionMask && 
 			 _leftRenderer->IsDepthTextureEnabled()) {
-		auto camera = _rightRenderer->GetCamera();
-		float nearPlane = camera ? camera->GetNearPlane() : 0.1f;
-		float farPlane = camera ? camera->GetFarPlane() : 100.0f;
 
-		// Render the reprojection mask
 		_rightRenderer->RenderReprojection(_models, _leftRenderer);
-	}
-	else {
-		// Normal color rendering
-		for (auto& m : _models) {
-			if (m)
-				_rightRenderer->Draw(m);
-		}
 	}
 }
 

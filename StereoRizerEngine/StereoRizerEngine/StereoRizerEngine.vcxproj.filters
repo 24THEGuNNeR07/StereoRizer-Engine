@@ -134,5 +134,8 @@
     <None Include="resources\shaders\Reprojection.shader">
       <Filter>Resource Files\Shaders</Filter>
     </None>
+    <None Include="resources\shaders\ColorVisualization.shader">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>
