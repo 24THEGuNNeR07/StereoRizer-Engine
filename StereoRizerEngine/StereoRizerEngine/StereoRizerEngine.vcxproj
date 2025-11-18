@@ -176,6 +176,7 @@ copy /Y "..\external\assimp\bin\Debug\assimp-vc143-mtd.dll" "$(TargetDir)"</Comm
     <ClInclude Include="include\core\Window.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="resources\shaders\ColorVisualization.shader" />
     <None Include="resources\shaders\DepthVisualization.shader" />
     <None Include="resources\shaders\Flat.shader" />
     <None Include="packages.config" />

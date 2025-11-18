@@ -18,6 +18,7 @@
 #include "graphics/Renderer.h"
 #include "graphics/Light.h"
 #include "graphics/GfxAPIUtils.h"
+#include "graphics/Shader.h"
 #include "xr/OpenXRSupport.h"
 #include <vector>
 #include <algorithm>
@@ -126,5 +127,8 @@ namespace stereorizer::core
 		// Depth texture state
 		ViewDisplayMode _leftViewDisplayMode = ViewDisplayMode::Color;
 		ViewDisplayMode _rightViewDisplayMode = ViewDisplayMode::Color;
+
+		std::shared_ptr<stereorizer::graphics::Shader> _reprojectionShader = nullptr;
+		std::shared_ptr<stereorizer::graphics::Shader> _standardShader = nullptr;
 	};
 }
