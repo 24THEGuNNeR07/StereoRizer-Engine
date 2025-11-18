@@ -30,11 +30,12 @@ namespace stereorizer::graphics
 		void SetupDepthTexture(int width, int height, bool isRightViewport = false);
 		void BeginDepthTextureRender();
 		void EndDepthTextureRender();
+		void RenderDepthTexture(const std::vector<std::shared_ptr<Model>>& models);
 		void RenderDepthVisualization(float nearPlane = 0.1f, float farPlane = 100.0f);
 		void RenderReprojection(const std::vector<std::shared_ptr<Model>>& models, std::unique_ptr<Renderer>& leftRenderer);
 		GLuint GetDepthTexture() const { return _depthTexture; }
 		GLuint GetColorTexture() const { return _colorTexture; }
-		bool IsDepthTextureEnabled() const { return _depthTextureEnabled; }
+		bool IsDepthTextureEnabled() const { return _depthTexture != 0; }
 
 	private:
 		std::shared_ptr<Camera> _camera;
@@ -51,7 +52,6 @@ namespace stereorizer::graphics
 		GLuint _framebuffer = 0;
 		GLuint _colorTexture = 0;
 		GLuint _depthTexture = 0;
-		bool _depthTextureEnabled = false;
 		int _textureWidth = 0;
 		int _textureHeight = 0;
 		bool _isRightViewport = false;

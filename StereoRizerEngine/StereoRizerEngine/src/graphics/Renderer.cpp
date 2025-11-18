@@ -65,15 +65,13 @@ void Renderer::SetupDepthTexture(int width, int height, bool isRightViewport) {
 		_depthTexture = 0;
 	}
 	
-	// Mark as enabled but not yet created
-	_depthTextureEnabled = true;
-	
 	LOG_INFO("Depth texture setup deferred - will be created on first use");
 	LOG_INFO("Target size: " + std::to_string(width) + "x" + std::to_string(height));
 }
 
 void Renderer::BeginDepthTextureRender() {
-	if (!_depthTextureEnabled) return;
+	// Check if depth texture setup was called (deferred creation pattern)
+	if (_textureWidth == 0 || _textureHeight == 0) return;
 	
 	// Create framebuffer and textures on first use if not already created
 	if (_framebuffer == 0) {
@@ -113,7 +111,19 @@ void Renderer::BeginDepthTextureRender() {
 		GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 		if (status != GL_FRAMEBUFFER_COMPLETE) {
 			LOG_ERROR("Framebuffer not complete for depth texture rendering! Status: " + std::to_string(status));
-			_depthTextureEnabled = false;
+			// Clean up failed resources
+			if (_framebuffer != 0) {
+				glDeleteFramebuffers(1, &_framebuffer);
+				_framebuffer = 0;
+			}
+			if (_colorTexture != 0) {
+				glDeleteTextures(1, &_colorTexture);
+				_colorTexture = 0;
+			}
+			if (_depthTexture != 0) {
+				glDeleteTextures(1, &_depthTexture);
+				_depthTexture = 0;
+			}
 			// Restore state and return
 			RestoreOpenGLState(savedState);
 			return;
@@ -141,7 +151,7 @@ void Renderer::BeginDepthTextureRender() {
 }
 
 void Renderer::EndDepthTextureRender() {
-	if (!_depthTextureEnabled) return;
+	if (_depthTexture == 0) return;
 	
 	// Check framebuffer status before finishing
 	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -158,6 +168,17 @@ void Renderer::EndDepthTextureRender() {
 	// Restore default framebuffer
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	// Note: Viewport will be set by the caller (Window class) based on which view is being rendered
+}
+
+void Renderer::RenderDepthTexture(const std::vector<std::shared_ptr<Model>>& models) {
+
+	BeginDepthTextureRender();
+	for (const auto& model : models) {
+		if (model) {
+			Draw(model);
+		}
+	}
+	EndDepthTextureRender();
 }
 
 void Renderer::SetupFullScreenQuad() {
@@ -236,7 +257,7 @@ void Renderer::RestoreOpenGLState(const OpenGLState& state) {
 }
 
 void Renderer::RenderDepthVisualization(float nearPlane, float farPlane) {
-	if (!_depthTextureEnabled || _depthTexture == 0) {
+	if (_depthTexture == 0) {
 		LOG_ERROR("Cannot render depth visualization: depth texture not available");
 		return;
 	}

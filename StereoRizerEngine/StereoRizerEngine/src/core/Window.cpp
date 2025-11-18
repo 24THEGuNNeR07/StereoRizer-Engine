@@ -168,14 +168,7 @@ void Window::RenderModelsLeft()
 	if (!_leftRenderer) return;
 	
 	// Always render to depth texture framebuffer first
-	if (_leftRenderer->IsDepthTextureEnabled()) {
-		_leftRenderer->BeginDepthTextureRender();
-		for (auto& m : _models) {
-			if (m)
-				_leftRenderer->Draw(m);
-		}
-		_leftRenderer->EndDepthTextureRender();
-	}
+	_leftRenderer->RenderDepthTexture(_models);
 	
 	// Render to the current viewport (left half of screen)
 	// Display either normal color rendering or depth visualization based on mode
@@ -199,14 +192,8 @@ void Window::RenderModelsRight()
 {
 	if (!_rightRenderer) return;
 
-	if (_rightRenderer->IsDepthTextureEnabled()) {
-		_rightRenderer->BeginDepthTextureRender();
-		for (auto& m : _models) {
-			if (m)
-				_rightRenderer->Draw(m);
-		}
-		_rightRenderer->EndDepthTextureRender();
-	}
+	// Always render to depth texture framebuffer first
+	_rightRenderer->RenderDepthTexture(_models);
 
 	// Render to the current viewport (right half of screen)
 	// Display based on selected mode: normal color, depth visualization, or reprojection mask
