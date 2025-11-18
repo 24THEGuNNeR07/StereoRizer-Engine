@@ -40,6 +40,13 @@ namespace stereorizer::graphics
 		std::shared_ptr<Camera> _camera;
 		std::shared_ptr<Light> _light;
 		
+		// OpenGL state management
+		struct OpenGLState {
+			GLint framebuffer;
+			GLint texture2D;
+			GLint activeTexture;
+		};
+		
 		// Depth texture rendering
 		GLuint _framebuffer = 0;
 		GLuint _colorTexture = 0;
@@ -59,5 +66,9 @@ namespace stereorizer::graphics
 		
 		void SetupFullScreenQuad();
 		void CleanupFullScreenQuad();
+		
+		// OpenGL state management
+		OpenGLState SaveOpenGLState();
+		void RestoreOpenGLState(const OpenGLState& state);
 	};
 }

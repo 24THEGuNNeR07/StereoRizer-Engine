@@ -78,12 +78,7 @@ void Renderer::BeginDepthTextureRender() {
 	// Create framebuffer and textures on first use if not already created
 	if (_framebuffer == 0) {
 		// Save current OpenGL state
-		GLint savedFramebuffer, savedTexture2D, savedActiveTexture;
-		
-		glGetIntegerv(GL_FRAMEBUFFER_BINDING, &savedFramebuffer);
-		glGetIntegerv(GL_ACTIVE_TEXTURE, &savedActiveTexture);
-		glActiveTexture(GL_TEXTURE0);
-		glGetIntegerv(GL_TEXTURE_BINDING_2D, &savedTexture2D);
+		OpenGLState savedState = SaveOpenGLState();
 		
 		// Create framebuffer
 		glGenFramebuffers(1, &_framebuffer);
@@ -120,10 +115,7 @@ void Renderer::BeginDepthTextureRender() {
 			LOG_ERROR("Framebuffer not complete for depth texture rendering! Status: " + std::to_string(status));
 			_depthTextureEnabled = false;
 			// Restore state and return
-			glBindFramebuffer(GL_FRAMEBUFFER, savedFramebuffer);
-			glBindTexture(GL_TEXTURE_2D, savedTexture2D);
-			glActiveTexture(savedActiveTexture);
-			//glViewport(0, 0, _textureWidth, _textureHeight);
+			RestoreOpenGLState(savedState);
 			return;
 		} else {
 			LOG_INFO("Depth texture framebuffer created on first use");
@@ -132,10 +124,7 @@ void Renderer::BeginDepthTextureRender() {
 		}
 		
 		// Restore state after creation
-		glBindFramebuffer(GL_FRAMEBUFFER, savedFramebuffer);
-		glBindTexture(GL_TEXTURE_2D, savedTexture2D);
-		glActiveTexture(savedActiveTexture);
-		//glViewport(0, 0, _textureWidth, _textureHeight);
+		RestoreOpenGLState(savedState);
 	}
 	
 	// Now use the framebuffer for rendering
@@ -226,6 +215,24 @@ void Renderer::CleanupFullScreenQuad() {
 		_quadVBO = 0;
 	}
 	_depthShader = nullptr;
+}
+
+Renderer::OpenGLState Renderer::SaveOpenGLState() {
+	OpenGLState state;
+	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &state.framebuffer);
+	glGetIntegerv(GL_ACTIVE_TEXTURE, &state.activeTexture);
+	glActiveTexture(GL_TEXTURE0);
+	glGetIntegerv(GL_TEXTURE_BINDING_2D, &state.texture2D);
+	return state;
+}
+
+void Renderer::RestoreOpenGLState(const OpenGLState& state) {
+	if (state.framebuffer != 0)
+		glBindFramebuffer(GL_FRAMEBUFFER, state.framebuffer);
+	if (state.texture2D != 0)
+		glBindTexture(GL_TEXTURE_2D, state.texture2D);
+	if (state.activeTexture != 0)
+		glActiveTexture(state.activeTexture);
 }
 
 void Renderer::RenderDepthVisualization(float nearPlane, float farPlane) {
