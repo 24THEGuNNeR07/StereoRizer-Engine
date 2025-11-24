@@ -37,7 +37,8 @@ namespace stereorizer::core
 	enum class ViewDisplayMode {
 		Color,
 		Depth,
-		ReprojectionMask
+		ReprojectionMask,
+		ReprojectionColor
 	};
 
 	class Window

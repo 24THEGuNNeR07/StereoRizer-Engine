@@ -172,6 +172,7 @@ void Window::RenderModelsLeft()
 	for (const auto& model : _models) {
 		if (model) {
 			model->GetShader()->DisableDefine("USE_REPROJECTION");
+			model->GetShader()->DisableDefine("SHOW_REPROJECTION_MASK");
 			model->GetShader()->RecompileWithDefines();
 		}
 	}
@@ -194,10 +195,16 @@ void Window::RenderModelsRight()
 {
 	if (!_rightRenderer) return;
 
-	if (_rightViewDisplayMode == ViewDisplayMode::ReprojectionMask) {
+	if (_rightViewDisplayMode == ViewDisplayMode::ReprojectionColor || _rightViewDisplayMode == ViewDisplayMode::ReprojectionMask) {
 		std::shared_ptr<Shader> reprojectionShader;
 
 		_models[0]->GetShader()->EnableDefine("USE_REPROJECTION");
+
+		if (_rightViewDisplayMode == ViewDisplayMode::ReprojectionMask)
+			_models[0]->GetShader()->EnableDefine("SHOW_REPROJECTION_MASK");
+		else 
+			_models[0]->GetShader()->DisableDefine("SHOW_REPROJECTION_MASK");
+		
 		_models[0]->GetShader()->RecompileWithDefines();
 
 		//// Upload camera matrices
@@ -222,12 +229,11 @@ void Window::RenderModelsRight()
 			glBindTexture(GL_TEXTURE_2D, colorTexture);
 			glUniform1i(glGetUniformLocation(_models[0]->GetShader()->GetID(), "leftColorTexture"), 1);
 		}
-
 	}
 
 	_rightRenderer->RenderToTextures(_models);
 
-	if (_rightViewDisplayMode == ViewDisplayMode::Color || _rightViewDisplayMode == ViewDisplayMode::ReprojectionMask) {
+	if (_rightViewDisplayMode == ViewDisplayMode::Color || _rightViewDisplayMode == ViewDisplayMode::ReprojectionMask || _rightViewDisplayMode == ViewDisplayMode::ReprojectionColor) {
 		_rightRenderer->RenderColorVisualization();
 	} 
 	else if (_rightViewDisplayMode == ViewDisplayMode::Depth && _rightRenderer->IsDepthTextureEnabled()) {
@@ -546,7 +552,8 @@ void stereorizer::core::Window::RenderImGui() {
 	ImGui::Text("Right View Display Mode:");
 	bool rightShowColor = (GetRightViewDisplayMode() == ViewDisplayMode::Color);
 	bool rightShowDepth = (GetRightViewDisplayMode() == ViewDisplayMode::Depth);
-	bool rightShowReprojection = (GetRightViewDisplayMode() == ViewDisplayMode::ReprojectionMask);
+	bool rightShowReprojectionMask = (GetRightViewDisplayMode() == ViewDisplayMode::ReprojectionMask);
+	bool rightShowReprojectionColor = (GetRightViewDisplayMode() == ViewDisplayMode::ReprojectionColor);
 	
 	if (ImGui::RadioButton("Color##Right", rightShowColor)) {
 		SetRightViewDisplayMode(ViewDisplayMode::Color);
@@ -554,8 +561,11 @@ void stereorizer::core::Window::RenderImGui() {
 	if (ImGui::RadioButton("Depth##Right", rightShowDepth)) {
 		SetRightViewDisplayMode(ViewDisplayMode::Depth);
 	}
-	if (ImGui::RadioButton("Reprojection Mask##Right", rightShowReprojection)) {
+	if (ImGui::RadioButton("Reprojection Mask##Right", rightShowReprojectionMask)) {
 		SetRightViewDisplayMode(ViewDisplayMode::ReprojectionMask);
+	}
+	if (ImGui::RadioButton("Reprojection Color##Right", rightShowReprojectionColor)) {
+		SetRightViewDisplayMode(ViewDisplayMode::ReprojectionColor);
 	}
 
 	// End columns
