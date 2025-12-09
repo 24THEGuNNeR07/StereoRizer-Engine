@@ -133,7 +133,7 @@ void main()
 
     float leftDepthValue = texture(leftDepthTexture, leftScreenCoord).r;
 
-    if (abs(leftDepthValue - rightDepthValue) <= 0.002 && leftDepthValue < 1.0) {
+    if (abs(leftDepthValue - rightDepthValue) <= 0.002 && leftDepthValue < 1.0 && leftScreenCoord.x >= 0.0 && leftScreenCoord.x <= 1.0) {
         vec4 leftColorValue = texture(leftColorTexture, leftScreenCoord);
         color = leftColorValue;
     } else {

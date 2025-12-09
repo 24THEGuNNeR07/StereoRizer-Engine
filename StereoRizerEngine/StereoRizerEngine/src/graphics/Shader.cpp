@@ -69,7 +69,7 @@ bool Shader::ReloadIfChanged()
 	fs::file_time_type currentWriteTime = GetLastWriteTime();
 	if (currentWriteTime != _lastWriteTime) {
 		_lastWriteTime = currentWriteTime;
-	LOG_INFO("Reloading shader...");
+		LOG_INFO("Reloading shader...");
 
 		ShaderProgramSource newSource = ParseShader(_filePath);
 		// Inject defines if they exist

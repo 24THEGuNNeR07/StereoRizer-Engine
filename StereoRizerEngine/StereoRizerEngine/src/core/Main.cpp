@@ -23,20 +23,10 @@ int main()
 
     // Create a directional light source (like the sun)
     auto light = std::make_shared<stereorizer::graphics::Light>(stereorizer::graphics::LightType::Directional);
-    light->SetDirection(glm::vec3(-0.5f, -1.0f, -0.8f));  // Light coming from upper-left-front
-    light->SetColor(glm::vec3(1.0f, 0.95f, 0.8f));        // Slightly warm white light
-    light->SetIntensity(1.2f);                             // Slightly brighter than default
+    light->SetDirection(glm::vec3(-0.5f, -1.0f, -0.8f));
+    light->SetColor(glm::vec3(1.0f, 0.95f, 0.8f));
+    light->SetIntensity(1.2f);
     
-    // Alternative: Create a point light (uncomment to test)
-    /*
-    auto light = std::make_shared<stereorizer::graphics::Light>(stereorizer::graphics::LightType::Point);
-    light->SetPosition(glm::vec3(2.0f, 2.0f, 0.0f));      // Position the light
-    light->SetColor(glm::vec3(1.0f, 1.0f, 1.0f));         // White light
-    light->SetIntensity(1.5f);                             // Higher intensity for point light
-    light->SetAttenuation(1.0f, 0.09f, 0.032f);           // Realistic attenuation values
-    */
-    
-    // Set the light for the window (both renderers will use it)
     window.SetLight(light);
     
     window.AddModel(model);
